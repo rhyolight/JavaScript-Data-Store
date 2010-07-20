@@ -20,10 +20,10 @@ Outside of the logic that actually makes an ajax call, you can have code with th
 	// sometime on page load
 	JSDS.create('ajaxCache');
 	
-	JSDS.on('ajaxCache', 'store', 'cityData', function(cityData) {
+	JSDS.on('ajaxCache', 'store', 'ajaxData', function(data) {
 		// this gets called any time a JSDS store called 'ajaxCache' has data stored. The data
 		// is sent directly here
-		renderCityDataIntoDom(cityData);
+		renderCityDataIntoDom(data);
 	});
 	
 	// meanwhile, in some DOM event handler that causes an ajax event...
@@ -31,9 +31,9 @@ Outside of the logic that actually makes an ajax call, you can have code with th
 		url: '/getCityData/json'
 		success: function(resp) {
 			// assuming the resp at this point is an evaluated JSON object
-			JSDS.get('ajaxCache').store('cityData', resp);
+			JSDS.get('ajaxCache').store('ajaxData', resp);
 		},
 		dataType: 'json'
 	});
 
-This allows you to set up a generic ajax proxy that always executed the same callback function. That function just stores the returned JSON object into JSDS. Anything that has registered to receive events from JSDS will get this data sent directly to them. This allows you to add more JavaScript modules onto your page and sign them up to receive any data being returned through the ajax proxy without attaching a new callback in some DOM event handler. This way, the DOM event handler is generic and calls the ajax proxy without providing callback logic. When the response is received, JSDS fires the response data to any component that has registered to listen.
+This allows you to set up a generic ajax proxy that always executes the same callback function. That function just stores the returned JSON object into JSDS. Anything that has registered to receive events from JSDS will get this data sent directly to them. This allows you to add more JavaScript modules onto your page and sign them up to receive any data being returned through the ajax proxy without attaching a new callback in some DOM event handler. This way, the DOM event handler is generic and calls the ajax proxy without providing callback logic. When the response is received, JSDS fires the response data to any component that has registered to listen.
