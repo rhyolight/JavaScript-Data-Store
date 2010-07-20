@@ -7,6 +7,10 @@ JSDS = {
 	    var jsds = this;
 	    
         id = id || _randomId();
+        
+        if (this._stores[id]) {
+			throw new Error('Cannot overwrite existing data store "' + id + '"!');
+		}
 
 		function _randomId() {
 			var text = "",
@@ -134,10 +138,6 @@ JSDS = {
 		/* End of JSDataStore class
 		/************************************************************************/
 		
-		if (this._stores[id]) {
-			throw new Error('Cannot overwrite existing data store "' + id + '"!');
-		}
-
         this._stores[id] = new JSDataStore(id);
         
 		return this._stores[id];
@@ -148,6 +148,23 @@ JSDS = {
 	},
 	
 	clear: function() {
+		var storeId;
+		for (storeId in this._stores) {
+		    if (this._stores.hasOwnProperty(storeId)) {
+		        this._stores[storeId].remove();
+		        delete this._stores[storeId];
+		    }
+		}
 		this._stores = {};
+	},
+	
+	count: function() {
+	    var cnt = 0, p;
+	    for (p in this._stores) {
+	        if (this._stores.hasOwnProperty(p)) {
+	            cnt++;
+	        }
+	    }
+	    return cnt;
 	}
 };

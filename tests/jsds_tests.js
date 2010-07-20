@@ -7,6 +7,10 @@ YUI().add('jsds_tests', function(Y) {
     
         name : "JSDS static tests",
         
+        tearDown: function() {
+            JSDS.clear();
+        },
+        
         testCreateStore: function () {
         	var store = JSDS.create('store1');
         	
@@ -47,6 +51,15 @@ YUI().add('jsds_tests', function(Y) {
             var jsds = JSDS.create();
             var id = jsds.getId();
             a.isNotNull(id, 'generated id was null');
+        },
+        
+        testGetStoreCount: function() {
+            var i=0;
+            for (;i<100;i++) {
+                JSDS.create();
+            }
+            
+            a.areEqual(100, JSDS.count());
         }
         
     }));
@@ -411,8 +424,19 @@ YUI().add('jsds_tests', function(Y) {
             a.areEqual(2, getCb, 'get callback called wrong number of times');
             a.areEqual(2, clearCb, 'clear callback called wrong number of times');
             a.areEqual(1, removeCb, 'remove callback called wrong number of times');
-            
-            
+        },
+        
+        test_RemoveEventFired_ForEachStore_WhenEntireStoreIsCleared: function() {
+            var called = 0;
+            this.s.on('remove', function() {
+                called++;
+            });
+            var otherStore = JSDS.create();
+            otherStore.on('remove', function() {
+                called++;
+            });
+            JSDS.clear();
+            a.areEqual(2, called, 'on remove callback for individual stores were not called on JSDS.clear()');
         }
         
     }));
