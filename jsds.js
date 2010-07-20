@@ -52,29 +52,32 @@ JSDS = {
             return result;
 		};
 		JSDataStore.prototype.get = function(key) {
-			var s = this.s, keys, i=0, j=0, v;
+			var s = this.s, keys, i=0, j=0, v, result;
 			
 			if (arguments.length === 1 && key.indexOf('\.') < 0) {
-				return s[key];
+				result = s[key];
+			} else {
+    			if (arguments.length > 1) {
+    				keys = [];
+    				for (i=0; i<arguments.length; i++) {
+    					if (arguments[i].indexOf('\.') > -1) {
+    						var splitKeys = arguments[i].split('\.');
+    						for (j=0; j<splitKeys.length; j++) {
+    							keys.push(splitKeys[j]);
+    						}
+    					} else {
+    						keys.push(arguments[i]);
+    					}
+    				}
+    			} else if (key.indexOf('\.') > -1) {
+    				keys = key.split('\.');
+    			}
+
+    			result = _getValue(s, keys);
 			}
 			
-			if (arguments.length > 1) {
-				keys = [];
-				for (i=0; i<arguments.length; i++) {
-					if (arguments[i].indexOf('\.') > -1) {
-						var splitKeys = arguments[i].split('\.');
-						for (j=0; j<splitKeys.length; j++) {
-							keys.push(splitKeys[j]);
-						}
-					} else {
-						keys.push(arguments[i]);
-					}
-				}
-			} else if (key.indexOf('\.') > -1) {
-				keys = key.split('\.');
-			}
-			
-			return _getValue(s, keys);
+			_fire('get', this, this.listeners);
+			return result;
 		};
 		JSDataStore.prototype.on = function(type, fn) {
 		    if (!this.listeners[type]) {
@@ -84,17 +87,19 @@ JSDS = {
 		};
 		JSDataStore.prototype.clear = function() {
 			this.s = {};
+			_fire('clear', this, this.listeners);
 		};
 		JSDataStore.prototype.remove = function() {
 		    this.clear();
 		    delete jsds._stores[this.getId()];
+		    _fire('remove', this, this.listeners);
 		};
 		// private methods
 		function _fire(type, store, listeners) {
 		    var i, ls = listeners[type];
 		    if (!ls) { return ; }
 		    for (i=0; i<ls.length; i++) {
-		        ls[i](type, store);
+		        ls[i](type, store, store.getId());
 		    }
 		}
 		function _clone(val) {

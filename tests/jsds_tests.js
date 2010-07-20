@@ -295,7 +295,7 @@ YUI().add('jsds_tests', function(Y) {
         s: null,
 
         setUp : function () {
-            this.s = JSDS.create('store');
+            this.s = JSDS.create('testStore');
         },
         
         tearDown : function () {
@@ -338,6 +338,19 @@ YUI().add('jsds_tests', function(Y) {
         	a.isTrue(called, 'callback for on store event never called');            
         },
         
+        test_OnStore_CallbackIsPassedStoreId: function() {
+            var called = false;
+        	this.s.on('store', function(type, store, storeId) {
+        	    called = true;
+        	    a.isNotNull(storeId, 'store id given to callback was null');
+        	    a.areEqual('testStore', storeId, 'Wrong store id');
+        	});
+        	
+        	this.s.store('mama', 'mia');
+        	
+        	a.isTrue(called, 'callback for on store event never called');            
+        },
+        
         test_OnGet_CallbackIsCalled: function () {
             var called = false;
         	this.s.on('get', function() {
@@ -349,6 +362,58 @@ YUI().add('jsds_tests', function(Y) {
         	
         	a.isTrue(called, 'callback for on get event never called');
         },
+        
+        test_OnClear_CallbackIsCalled: function () {
+            var called = false;
+        	this.s.on('clear', function() {
+        	    called = true;
+        	});
+        	
+        	this.s.clear('mama');
+        	
+        	a.isTrue(called, 'callback for on clear event never called');
+        },
+        
+        test_OnRemove_CallbackIsCalled: function () {
+            var called = false;
+        	this.s.on('remove', function() {
+        	    called = true;
+        	});
+        	
+        	this.s.remove();
+        	
+        	a.isTrue(called, 'callback for on remove event never called');
+        },
+        
+        test_All_Event_CallbacksAreCalledCorrectTimes: function() {
+            var storeCb = 0, getCb = 0, clearCb = 0, removeCb = 0;
+            this.s.on('store', function() {
+                storeCb++;
+            });
+            this.s.on('get', function() {
+                getCb++;
+            });
+            this.s.on('clear', function() {
+                clearCb++;
+            });
+            this.s.on('remove', function() {
+                removeCb++;
+            });
+            
+            this.s.store('city', 'Miami');  // storeCb      = 1
+            this.s.get('city');             // getCb        = 1
+            this.s.store('color', 'red');   // storeCb      = 2
+            this.s.get('color');            // getCb        = 2
+            this.s.clear();                 // clearCb      = 1
+            this.s.remove();                // clearCb      = 2
+                                            // removeCb     = 1
+            a.areEqual(2, storeCb, 'store callback called wrong number of times');
+            a.areEqual(2, getCb, 'get callback called wrong number of times');
+            a.areEqual(2, clearCb, 'clear callback called wrong number of times');
+            a.areEqual(1, removeCb, 'remove callback called wrong number of times');
+            
+            
+        }
         
     }));
     
