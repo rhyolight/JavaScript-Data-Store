@@ -52,7 +52,7 @@ JSDS = {
             }
             
             result = _store(this.s, key, val);
-            _fire('store', this, this.listeners);
+            _fire('store', this.listeners, {key: key, value: val, id: this.id});
             return result;
 		};
 		JSDataStore.prototype.get = function(key) {
@@ -80,7 +80,7 @@ JSDS = {
     			result = _getValue(s, keys);
 			}
 			
-			_fire('get', this, this.listeners);
+			_fire('get', this.listeners);
 			return result;
 		};
 		JSDataStore.prototype.on = function(type, fn) {
@@ -91,19 +91,20 @@ JSDS = {
 		};
 		JSDataStore.prototype.clear = function() {
 			this.s = {};
-			_fire('clear', this, this.listeners);
+			_fire('clear', this.listeners);
 		};
 		JSDataStore.prototype.remove = function() {
 		    this.clear();
 		    delete jsds._stores[this.getId()];
-		    _fire('remove', this, this.listeners);
+		    _fire('remove', this.listeners);
 		};
 		// private methods
-		function _fire(type, store, listeners) {
+		function _fire(type, listeners, args) {
 		    var i, ls = listeners[type];
 		    if (!ls) { return ; }
+		    args = args || {};
 		    for (i=0; i<ls.length; i++) {
-		        ls[i](type, store, store.getId());
+		        ls[i](type, args);
 		    }
 		}
 		function _clone(val) {
@@ -166,5 +167,13 @@ JSDS = {
 	        }
 	    }
 	    return cnt;
+	},
+	
+	on: function(id, type, key, fn) {
+	    this._stores[id].on(type, function(type, args) {
+	        if (args.key === key) {
+	            fn(args.value);
+	        }
+	    });
 	}
 };

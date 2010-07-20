@@ -327,21 +327,9 @@ YUI().add('jsds_tests', function(Y) {
         	a.isTrue(called, 'callback for on store event never called');
         },
         
-        test_OnStore_CallbackIsPassedStore: function () {
-            var called = false, myStore = this.s;
-        	this.s.on('store', function(type, store) {
-        	    called = true;
-        	    a.areSame(myStore, store, 'callback was not sent current store');
-        	});
-        	
-        	this.s.store('mama', 'mia');
-        	
-        	a.isTrue(called, 'callback for on store event never called');
-        },
-        
         test_OnStore_CallbackIsPassedTypeOfEvent: function() {
             var called = false;
-        	this.s.on('store', function(type, store) {
+        	this.s.on('store', function(type) {
         	    called = true;
         	    a.areEqual('store', type, 'Wrong event type');
         	});
@@ -353,15 +341,28 @@ YUI().add('jsds_tests', function(Y) {
         
         test_OnStore_CallbackIsPassedStoreId: function() {
             var called = false;
-        	this.s.on('store', function(type, store, storeId) {
+        	this.s.on('store', function(type, args) {
         	    called = true;
-        	    a.isNotNull(storeId, 'store id given to callback was null');
-        	    a.areEqual('testStore', storeId, 'Wrong store id');
+        	    a.isNotUndefined(args.id, 'store id given to callback was undefined');
+        	    a.areEqual('testStore', args.id, 'Wrong store id');
         	});
         	
         	this.s.store('mama', 'mia');
         	
         	a.isTrue(called, 'callback for on store event never called');            
+        },
+        
+        test_onStoreEvent_PassesStoreKeyAndValue: function() {
+            var called = false;
+        	this.s.on('store', function(type, args) {
+        	    called = true;
+        	    a.areEqual('mama', args.key, 'on store callback passed wrong key');
+        	    a.areEqual('mia', args.value, 'on store callback passed wrong value');
+        	});
+        	
+        	this.s.store('mama', 'mia');
+        	
+        	a.isTrue(called, 'callback for on store event never called');
         },
         
         test_OnGet_CallbackIsCalled: function () {
@@ -437,6 +438,27 @@ YUI().add('jsds_tests', function(Y) {
             });
             JSDS.clear();
             a.areEqual(2, called, 'on remove callback for individual stores were not called on JSDS.clear()');
+        },
+        
+        test_StaticJSDS_On_function: function() {
+            var ajaxCache = JSDS.create('ajaxCache'),
+                cityData = {
+                    "Miami": "Florida",
+                    "St. Louis": "Missouri",
+                    "Chicago": "Illinois"
+                },
+                retrievedCityData,
+                callbackCalled = false;
+        
+            JSDS.on('ajaxCache', 'store', 'cityData', function(cityData) {
+                callbackCalled = true;
+                retrievedCityData = cityData;
+            });
+            
+            ajaxCache.store('cityData', cityData);
+            
+            a.isTrue(callbackCalled, 'Static JSDS callback not called on store');
+            a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
         }
         
     }));
