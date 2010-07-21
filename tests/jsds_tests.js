@@ -452,9 +452,9 @@ YUI().add('jsds_tests', function(Y) {
 			JSDS.on('store', {
 			    id: 'ajaxCache', 
 		        key: 'cityData', 
-		        callback: function(cityData) {
+		        callback: function(data) {
 		    	    callbackCalled = true;
-				    retrievedCityData = cityData;
+				    retrievedCityData = data.value;
 			    }
 			});
 			
@@ -477,9 +477,9 @@ YUI().add('jsds_tests', function(Y) {
 			JSDS.on('get', {
 			    id:'ajaxCache', 
 			    key:'cityData', 
-			    callback:function(cityData) {
+			    callback:function(data) {
 				    callbackCalled = true;
-				    retrievedCityData = cityData;
+				    retrievedCityData = data.value;
 			    }
 			});
 			
@@ -515,9 +515,9 @@ YUI().add('jsds_tests', function(Y) {
 		
 			JSDS.on('store', {
 			    key:'cityData', 
-			    callback: function(cityData) {
+			    callback: function(data) {
 				    callbackCalled++;
-				    retrievedCityData = cityData;
+				    retrievedCityData = data.value;
 			    }
 			});
 			
@@ -525,6 +525,36 @@ YUI().add('jsds_tests', function(Y) {
 			otherCache.store('otherData', 'pencil');
 			
 			a.areEqual(callbackCalled, 1, 'Static JSDS callback not called correct number of times');
+			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
+		},
+		
+		test_StaticJSDS_OnStore_ForAllStoreObjects_WithAnyKey: function() {
+		    var ajaxCache = JSDS.create('ajaxCache'),
+		        otherCache = JSDS.create('otherCache'),
+				cityData = {
+					"Miami": "Florida",
+					"St. Louis": "Missouri",
+					"Chicago": "Illinois"
+				},
+				retrievedCityData,
+				retrievedOtherData,
+				callbackCalled = 0;
+		
+			JSDS.on('store', {
+			    callback: function(data) {
+				    callbackCalled++;
+				    if (data.key === 'cityData') {
+    				    retrievedCityData = data.value;
+				    } else {
+				        retrievedOtherData = data.value;
+				    }
+			    }
+			});
+			
+			ajaxCache.store('cityData', cityData);
+			otherCache.store('otherData', 'pencil');
+			
+			a.areEqual(callbackCalled, 2, 'Static JSDS callback not called correct number of times');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
 		}
 		

@@ -173,22 +173,22 @@ JSDS = {
 	on: function(type, o) {
 	    var sname;
 	    
+	    function wrapCallback(type, store, cb, key) {
+	        store.on(type, function(type, args) {
+    			if (!key || args.key === key) {
+    				cb({key: args.key, value: args.value});
+    			}
+    		});
+	    }
+	    
 	    if (!o.id) {
 	        for (sname in this._stores) {
 	            if (this._stores.hasOwnProperty(sname)) {
-	                this._stores[sname].on(type, function(type, args) {
-            			if (args.key === o.key) {
-            				o.callback(args.value);
-            			}
-            		});
+	                wrapCallback(type, this._stores[sname], o.callback, o.key);
 	            }
 	        }
 	    } else {
-    		this._stores[o.id].on(type, function(type, args) {
-    			if (args.key === o.key) {
-    				o.callback(args.value);
-    			}
-    		});
+	        wrapCallback(type, this._stores[o.id], o.callback, o.key);
 	    }
 	}
 };
