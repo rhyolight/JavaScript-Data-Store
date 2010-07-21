@@ -118,7 +118,7 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual(3, this.s.get('chicken', 'eggs'));
 		},
 		
-		testStoringDeepingIntoNamespaceDoesntClobberExistingData: function() {
+		testUpdatingDoesntClobberExistingData: function() {
 		    var chicken = {
 				name: 'Susie', eggs: 3, farm:'Hillsboro Farms'
 			};
@@ -133,6 +133,71 @@ YUI().add('jsds_tests', function(Y) {
 			
 			a.areEqual(4, this.s.get('chicken', 'eggs'));
 			a.areEqual('Susie', this.s.get('chicken.name'));
+			a.areEqual('Hillsboro Farms', this.s.get('chicken.farm'));
+		},
+		
+		testUpdatingDoesntClobberExistingData_DeepStructure: function() {
+		    var val = {
+				animals: {
+					reptiles: {
+						turtles: ['Victor']
+					},
+					mammals: {
+						primates: {
+							humans: {
+								Taylors: ['Matt', 'Trinity', 'Dean', 'Romy']
+							}
+						},
+						dogs: ['Sasha', 'Ann-Marie']
+					}
+				}
+			};
+			
+			this.s.store('stuff', val);
+			
+			var newVal = {
+				animals: {
+					reptiles: {
+						lizards: ['Izzy']
+					},
+					mammals: {
+						primates: {
+							humans: {
+								Simpsons: ['Homer', 'Bart', 'Marge', 'Lisa', 'Maggie']
+							}
+						},
+						dogs: ['Scooby']
+					}
+				}
+			};
+			
+			this.s.store('stuff', newVal, { update: true });
+			
+			var result = this.s.get('stuff.animals.reptiles.turtles');
+			a.isArray(result, 'result should have been an array');
+			a.areEqual(1, result.length, 'result should have length of 1');
+			a.areEqual('Victor', result[0]);
+
+			result = this.s.get('stuff.animals.reptiles.lizards');
+			a.isArray(result, 'result should have been an array');
+			a.areEqual(1, result.length, 'result should have length of 1');
+			a.areEqual('Izzy', result[0]);
+			
+			result = this.s.get('stuff.animals.mammals.primates.humans');
+			a.isObject(result, 'result should have been an object');
+			a.isNotUndefined(result.Taylors, 'old value was clobbered: "Taylors"');
+			a.areEqual(4, result.Taylors.length, 'result should have length of 4');
+			a.isNotUndefined(result.Simpsons, 'new value was not added: "Simpsons"');
+			a.areEqual(5, result.Simpsons.length, 'result should have length of 5');
+			a.areEqual('Matt', result.Taylors[0]);
+			a.areEqual('Romy', result.Taylors[3]);
+			a.areEqual('Homer', result.Simpsons[0]);
+			a.areEqual('Lisa', result.Simpsons[3]);
+			
+			result = this.s.get('stuff.animals.mammals.dogs');
+			a.isArray(result, 'result should have been array');
+			a.areEqual(1, result.length, 'array should have been 1');
+			a.areEqual('Scooby', result[0], 'Wrong dog name on update');
 		},
 
 		testStoreReturnsPreviousValue: function() {
@@ -197,6 +262,9 @@ YUI().add('jsds_tests', function(Y) {
 			var result = this.s.get('stuff');
 			
 			a.isObject(result, 'result should have been an object');
+			
+			result = this.s.get('stuff.animals.reptiles.lizards');
+			a.isUndefined(result, 'query for lizards should be undefined');
 			
 			result = this.s.get('stuff', 'animals', 'reptiles', 'turtles');
 			a.isArray(result, 'result should have been an array');

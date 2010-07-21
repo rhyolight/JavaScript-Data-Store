@@ -34,10 +34,12 @@ JSDS = {
 		JSDataStore.prototype.getId = function() {
 			return this.id;
 		};
-		JSDataStore.prototype.store = function(key, val) {
+		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
 			var result;
 			
-			function _store(store, key, val, oldVal /* optional */) {
+			opts = opts || { update: false };
+			
+			function _store(store, key, val, oldVal /*optional*/) {
 				var result, keys, prevKey, currStore, oldKey, oldVal;
 				if (key.indexOf('\.') >= 0) {
 					keys = key.split('.');
@@ -47,7 +49,14 @@ JSDS = {
 					return _store(store[oldKey], keys, val, oldVal);
 				}
 				result = oldVal ? oldVal[key] : store[key];
-				store[key] = val;
+				// if this is an update, and there is an old value to update
+				if (opts.update && result) {
+				    _update(store, val, key);
+				} 
+				// if not an update, just overwrite old value
+				else {
+    				store[key] = val;
+				}
 				return result;
 			}
 			
@@ -100,6 +109,24 @@ JSDS = {
 			_fire('remove', this.listeners);
 		};
 		// private methods
+		function _update(store, val, key) {
+		    var vprop;
+		    if (typeof val !== 'object' || val instanceof Array) {
+    		    store[key] = val;
+    		    return;
+		    }
+		    for (vprop in val) {
+		        if (val.hasOwnProperty(vprop)) {
+		            if (store[key].hasOwnProperty(vprop)) {
+		                // update existing values
+		                _update(store[key], val[vprop], vprop);
+		            } else {
+		                // set non-existing values
+		                store[key][vprop] = val[vprop];
+		            }
+		        }
+		    }
+		}
 		function _fire(type, listeners, args) {
 			var i, ls = listeners[type];
 			if (!ls) { return ; }
@@ -129,11 +156,16 @@ JSDS = {
 			return newObj;
 		}
 		function _getValue(store, keys) {
-			var key = keys.shift();
+			var key = keys.shift(), endKey;
 			if (store[key][keys[0]]) {
 				return _getValue(store[key], keys);
 			} else {
-				return store[key];
+			    if (keys.length) {
+			        endKey = keys[0];
+			    } else {
+			        endKey = key;
+			    }
+				return store[endKey];
 			}
 		}
 		/************************************************************************
