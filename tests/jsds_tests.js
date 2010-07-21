@@ -117,6 +117,23 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual('Susie', this.s.get('chicken.name'));
 			a.areEqual(3, this.s.get('chicken', 'eggs'));
 		},
+		
+		testStoringDeepingIntoNamespaceDoesntClobberExistingData: function() {
+		    var chicken = {
+				name: 'Susie', eggs: 3, farm:'Hillsboro Farms'
+			};
+			this.s.store('chicken', chicken);
+			
+			var newchick = { eggs: 4}
+			
+			a.areEqual('Susie', this.s.get('chicken.name'));
+			a.areEqual(3, this.s.get('chicken', 'eggs'));
+			
+			this.s.store('chicken', newchick, {update: true});
+			
+			a.areEqual(4, this.s.get('chicken', 'eggs'));
+			a.areEqual('Susie', this.s.get('chicken.name'));
+		},
 
 		testStoreReturnsPreviousValue: function() {
 			this.s.store('city', 'Cupertino');
