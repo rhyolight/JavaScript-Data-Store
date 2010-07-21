@@ -524,7 +524,19 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual(2, called, 'on remove callback for individual stores were not called on JSDS.clear()');
 		},
 		
-		test_StaticJSDS_OnStore_function: function() {
+		test_EventCallbacks_CanBeExecuted_WithinCustomScope: function() {
+		    this.wrestler = 'Rowdy Rodney Piper';
+			this.s.on('store', function() {
+			    this.wrestler = 'Hulk Hogan';
+			}, this);
+			
+			this.s.store('mama', 'mia');
+			
+			a.areEqual('Hulk Hogan', this.wrestler);
+			delete this.wrestler;
+		},
+		
+        test_StaticJSDS_OnStore_function: function() {
 			var ajaxCache = JSDS.create('ajaxCache'),
 				cityData = {
 					"Miami": "Florida",
@@ -575,18 +587,6 @@ YUI().add('jsds_tests', function(Y) {
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
 		},
 		
-		test_EventCallbacks_CanBeExecuted_WithinCustomScope: function() {
-		    this.wrestler = 'Rowdy Rodney Piper';
-			this.s.on('store', function() {
-			    this.wrestler = 'Hulk Hogan';
-			}, this);
-			
-			this.s.store('mama', 'mia');
-			
-			a.areEqual('Hulk Hogan', this.wrestler);
-			delete this.wrestler;
-		},
-		
 		test_StaticJSDS_OnStore_ForAllStoreObjects: function() {
 		    var ajaxCache = JSDS.create('ajaxCache'),
 		        otherCache = JSDS.create('otherCache'),
@@ -609,7 +609,7 @@ YUI().add('jsds_tests', function(Y) {
 			ajaxCache.store('cityData', cityData);
 			otherCache.store('otherData', 'pencil');
 			
-			a.areEqual(callbackCalled, 1, 'Static JSDS callback not called correct number of times');
+			a.areEqual(1, callbackCalled, 'Static JSDS callback not called correct number of times');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
 		},
 		
@@ -641,6 +641,37 @@ YUI().add('jsds_tests', function(Y) {
 			
 			a.areEqual(callbackCalled, 2, 'Static JSDS callback not called correct number of times');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
+		},
+		
+		test_StoresFireEvents_ToEventHandlers_CreatedBeforeStoreWasCreated: function() {
+		    var called = false;
+		    JSDS.on('store', {
+		        callback: function() {
+		            called = true;
+		        }
+		    });
+		    
+		    var s = JSDS.create();
+		    
+		    s.store('color', 'red');
+		    
+		    a.isTrue(called, 'Callback was never called for store created after event handler attached!');
+		},
+		
+		test_RemovingStore_DeletesStaticListeners_MatchingStoreId: function() {
+		    var s = JSDS.create('removeTest');
+		    
+		    JSDS.on('store', {
+		        id: 'removeTest',
+		        callback: function() {}
+		    });
+		    
+		    var numListeners = JSDS._listeners.store.length;
+		    
+		    s.remove();
+		    delete s;
+		    
+		    a.areEqual((numListeners - 1), JSDS._listeners.store.length, 'Removing store did not remove static listeners!');
 		}
 		
 	}));
