@@ -1,7 +1,8 @@
 YUI().add('jsds_tests', function(Y) {
 
 	var suite = new Y.Test.Suite("JSDS_Suite"),
-		a = Y.Assert;
+		a = Y.Assert,
+		aa = Y.ArrayAssert;
 
 	suite.add(new Y.Test.Case({
 	
@@ -15,18 +16,15 @@ YUI().add('jsds_tests', function(Y) {
 			var store = JSDS.create('store1');
 			
 			a.isNotUndefined(store, 'create returned undefined');
-			a.isNotUndefined(store.getId, 'new store has no getId function');
-			a.isFunction(store.getId, 'new store.getId is not a function');
-			a.areEqual('store1', store.getId(), 'wrong id was returned');
-			a.areEqual('store1', store.getId(), 'new store returned wrong name');
+			a.isNotUndefined(store.id, 'new store has no id');
+			a.areEqual('store1', store.id, 'wrong id was returned');
 			
 			var store2 = JSDS.create('store2');
 			
 			a.areNotSame(store, store2, 'stores created should not be same obj');
 			a.isNotUndefined(store2, 'create returned undefined');
-			a.isNotUndefined(store2.getId, 'new store has no getId function');
-			a.isFunction(store2.getId, 'new store.getId is not a function');
-			a.areEqual('store2', store2.getId(), 'new store returned wrong name');
+			a.isNotUndefined(store2.id, 'new store has no id');
+			a.areEqual('store2', store2.id, 'new store returned wrong id');
 		},
 		
 		testGetCreatedStore: function() {
@@ -49,7 +47,7 @@ YUI().add('jsds_tests', function(Y) {
 		
 		testStoreCreationWithoutIdentifier: function() {
 			var jsds = JSDS.create();
-			var id = jsds.getId();
+			var id = jsds.id;
 			a.isNotNull(id, 'generated id was null');
 		},
 		
@@ -60,6 +58,20 @@ YUI().add('jsds_tests', function(Y) {
 			}
 			
 			a.areEqual(100, JSDS.count());
+		},
+		
+		testGetStoreIds: function() {
+		    JSDS.create('a');
+		    JSDS.create('b');
+		    JSDS.create('c');
+		    
+		    var result = JSDS.ids();
+		    
+		    a.isArray(result, 'ids were not array');
+		    a.areEqual(3, result.length, 'ids array wrong size');
+		    aa.contains('a', result, 'missing id!');
+		    aa.contains('b', result, 'missing id!');
+		    aa.contains('c', result, 'missing id!');
 		}
 		
 	}));

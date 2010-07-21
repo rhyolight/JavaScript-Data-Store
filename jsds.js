@@ -27,14 +27,11 @@ JSDS = {
 		/* The JSDataStore class 
 		/************************************************************************/
 		function JSDataStore(id) {
-			this.s = {};
-			this.listeners = {};
+			this._s = {};
+			this._l = {};
 			this.id = id;
 		}
 		// public methods
-		JSDataStore.prototype.getId = function() {
-			return this.id;
-		};
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
 			var result;
 			
@@ -61,12 +58,12 @@ JSDS = {
 				return result;
 			}
 			
-			result = _store(this.s, key, val);
+			result = _store(this._s, key, val);
 			_fire.call(this, 'store', {key: key, value: val, id: this.id});
 			return result;
 		};
 		JSDataStore.prototype.get = function(key) {
-			var s = this.s, keys, i=0, j=0, v, result;
+			var s = this._s, keys, i=0, j=0, v, result;
 			
 			if (arguments.length === 1 && key.indexOf('\.') < 0) {
 				result = s[key];
@@ -94,18 +91,18 @@ JSDS = {
 			return result;
 		};
 		JSDataStore.prototype.on = function(type, fn, scope) {
-			if (!this.listeners[type]) {
-				this.listeners[type] = [];
+			if (!this._l[type]) {
+				this._l[type] = [];
 			}
 			scope = scope || this;
-			this.listeners[type].push({fn:fn, scope:scope});
+			this._l[type].push({fn:fn, scope:scope});
 		};
 		JSDataStore.prototype.clear = function() {
-			this.s = {};
+			this._s = {};
 			_fire.call(this, 'clear');
 		};
 		JSDataStore.prototype.remove = function() {
-		    var ltype, optsArray, opts;
+		    var ltype, optsArray, opts, i;
 			this.clear();
 			for (ltype in JSDS._listeners) {
 		        if (JSDS._listeners.hasOwnProperty(ltype)) {
@@ -118,7 +115,7 @@ JSDS = {
 		            }
 		        }
 		    }
-			delete jsds._stores[this.getId()];
+			delete jsds._stores[this.id];
 			_fire.call(this, 'remove');
 		};
 		// private methods
@@ -141,7 +138,7 @@ JSDS = {
 		    }
 		}
 		function _fire(type, args) {
-			var i, ltype, ls = this.listeners[type], lname, optsArray, opts, scope;
+			var i, ltype, ls = this._l[type], lname, optsArray, opts, scope;
 			// local listeners
 			if (ls) {
     			args = args || {};
@@ -227,6 +224,16 @@ JSDS = {
 			}
 		}
 		return cnt;
+	},
+	
+	ids: function() {
+	    var id, ids = [];
+	    for (id in this._stores) {
+	        if (this._stores.hasOwnProperty(id)) {
+	            ids.push(id);
+	        }
+	    }
+	    return ids;
 	},
 	
 	on: function(type, o) {

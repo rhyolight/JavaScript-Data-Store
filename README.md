@@ -21,9 +21,9 @@ JSDS has a few static functions for creating and managing _stores_, which are th
 * `count()`: Returns the current number of JSDS data stores that have been created in memory
 * `on(id, type, key, callback)`: Attaches given function as event handler for the specified type of event (store, get, clear, or remove). Callback is only called when the specified key is acted upon.
 
-Each JSDS data store object created will have the following instance methods:
+Each JSDS data store object created will have the following instance properties:
 
-* `getId()`: Returns the id of the data store
+* `id`: The id of the store
 * `store(key, value)`: Stores the given value for the given key
 * `get(key)`: Retrieves the value for given key, or undefined if it doesn't exist
 * `on(type, callback)`: Attaches given function as event handler for the specified type of event (store, get, clear, or remove). Callback is passed different parameters depending on the type of event.
