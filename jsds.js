@@ -128,7 +128,6 @@ JSDS = {
 			}
 			return newObj;
 		}
-		
 		function _getValue(store, keys) {
 			var key = keys.shift();
 			if (store[key][keys[0]]) {
@@ -171,37 +170,23 @@ JSDS = {
 		return cnt;
 	},
 	
-	on: function() {
-	    var type, id, key, fn, sname;
+	on: function(type, o) {
+	    var sname;
 	    
-	    // (type, key, fn)
-	    if (arguments.length === 3) {
-	        type = arguments[0];
-	        key = arguments[1];
-	        fn = arguments[2];
-	    } 
-	    // (type, id, key, fn)
-	    else if (arguments.length === 4) {
-	        type = arguments[0];
-	        id = arguments[1];
-	        key = arguments[2];
-	        fn = arguments[3];
-	    }
-	    
-	    if (!id) {
+	    if (!o.id) {
 	        for (sname in this._stores) {
 	            if (this._stores.hasOwnProperty(sname)) {
 	                this._stores[sname].on(type, function(type, args) {
-            			if (args.key === key) {
-            				fn(args.value);
+            			if (args.key === o.key) {
+            				o.callback(args.value);
             			}
             		});
 	            }
 	        }
 	    } else {
-    		this._stores[id].on(type, function(type, args) {
-    			if (args.key === key) {
-    				fn(args.value);
+    		this._stores[o.id].on(type, function(type, args) {
+    			if (args.key === o.key) {
+    				o.callback(args.value);
     			}
     		});
 	    }

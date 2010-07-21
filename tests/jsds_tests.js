@@ -449,9 +449,13 @@ YUI().add('jsds_tests', function(Y) {
 				retrievedCityData,
 				callbackCalled = false;
 		
-			JSDS.on('store', 'ajaxCache', 'cityData', function(cityData) {
-				callbackCalled = true;
-				retrievedCityData = cityData;
+			JSDS.on('store', {
+			    id: 'ajaxCache', 
+		        key: 'cityData', 
+		        callback: function(cityData) {
+		    	    callbackCalled = true;
+				    retrievedCityData = cityData;
+			    }
 			});
 			
 			ajaxCache.store('cityData', cityData);
@@ -470,9 +474,13 @@ YUI().add('jsds_tests', function(Y) {
 				retrievedCityData,
 				callbackCalled = false;
 		
-			JSDS.on('get', 'ajaxCache', 'cityData', function(cityData) {
-				callbackCalled = true;
-				retrievedCityData = cityData;
+			JSDS.on('get', {
+			    id:'ajaxCache', 
+			    key:'cityData', 
+			    callback:function(cityData) {
+				    callbackCalled = true;
+				    retrievedCityData = cityData;
+			    }
 			});
 			
 			ajaxCache.store('cityData', cityData);
@@ -505,9 +513,12 @@ YUI().add('jsds_tests', function(Y) {
 				retrievedCityData,
 				callbackCalled = 0;
 		
-			JSDS.on('store', 'cityData', function(cityData) {
-				callbackCalled++;
-				retrievedCityData = cityData;
+			JSDS.on('store', {
+			    key:'cityData', 
+			    callback: function(cityData) {
+				    callbackCalled++;
+				    retrievedCityData = cityData;
+			    }
 			});
 			
 			ajaxCache.store('cityData', cityData);
