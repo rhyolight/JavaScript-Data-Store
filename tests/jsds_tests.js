@@ -413,13 +413,13 @@ YUI().add('jsds_tests', function(Y) {
 				removeCb++;
 			});
 			
-			this.s.store('city', 'Miami');  // storeCb	  = 1
-			this.s.get('city');			 // getCb		= 1
-			this.s.store('color', 'red');   // storeCb	  = 2
+			this.s.store('city', 'Miami');  // storeCb      = 1
+			this.s.get('city');			    // getCb		= 1
+			this.s.store('color', 'red');   // storeCb      = 2
 			this.s.get('color');			// getCb		= 2
-			this.s.clear();				 // clearCb	  = 1
-			this.s.remove();				// clearCb	  = 2
-											// removeCb	 = 1
+			this.s.clear();				    // clearCb      = 1
+			this.s.remove();				// clearCb      = 2
+											// removeCb     = 1
 			a.areEqual(2, storeCb, 'store callback called wrong number of times');
 			a.areEqual(2, getCb, 'get callback called wrong number of times');
 			a.areEqual(2, clearCb, 'clear callback called wrong number of times');

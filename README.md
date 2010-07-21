@@ -40,10 +40,14 @@ Outside of the logic that actually makes an ajax call, you can have code with th
 	// sometime on page load
 	JSDS.create('ajaxCache');
 	
-	JSDS.on('store', 'ajaxCache', 'ajaxData', function(data) {
-		// this gets called any time a JSDS store called 'ajaxCache' has data stored under the key 'ajaxData'. 
-		// The data is sent directly here
-		renderCityDataIntoDom(data);
+	JSDS.on('store', {
+	    id: 'ajaxCache', 
+	    key: 'ajaxData', 
+	    callback: function(data) {
+		    // this gets called any time a JSDS store called 'ajaxCache' has data stored under the key 'ajaxData'. 
+		    // The data is sent directly here, within an object with a 'key' and 'value'
+		    renderCityDataIntoDom(data.value);
+	    }
 	});
 	
 	// meanwhile, in some DOM event handler that causes an ajax event...
@@ -65,6 +69,6 @@ It is just as easy to return instances of JSDS objects into local variables. The
 	var myStore = JSDS.create('my store');
 	
 	myStore.on('store', 'cityData', function(type, data) {
-		var storedValue = args.value;
+		var storedValue = data.value;
 	});
 	
