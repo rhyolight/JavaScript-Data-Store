@@ -80,14 +80,15 @@ JSDS = {
 				result = _getValue(s, keys);
 			}
 			
-			_fire('get', this.listeners);
+			_fire('get', this.listeners, {key:key, value:result});
 			return result;
 		};
-		JSDataStore.prototype.on = function(type, fn) {
+		JSDataStore.prototype.on = function(type, fn, scope) {
 			if (!this.listeners[type]) {
 				this.listeners[type] = [];
 			}
-			this.listeners[type].push(fn);
+			scope = scope || this;
+			this.listeners[type].push({fn:fn, scope:scope});
 		};
 		JSDataStore.prototype.clear = function() {
 			this.s = {};
@@ -104,7 +105,8 @@ JSDS = {
 			if (!ls) { return ; }
 			args = args || {};
 			for (i=0; i<ls.length; i++) {
-				ls[i](type, args);
+			    
+				ls[i].fn.call(ls[i].scope, type, args);
 			}
 		}
 		function _clone(val) {
@@ -169,11 +171,39 @@ JSDS = {
 		return cnt;
 	},
 	
-	on: function(id, type, key, fn) {
-		this._stores[id].on(type, function(type, args) {
-			if (args.key === key) {
-				fn(args.value);
-			}
-		});
+	on: function() {
+	    var type, id, key, fn, sname;
+	    
+	    // (type, key, fn)
+	    if (arguments.length === 3) {
+	        type = arguments[0];
+	        key = arguments[1];
+	        fn = arguments[2];
+	    } 
+	    // (type, id, key, fn)
+	    else if (arguments.length === 4) {
+	        type = arguments[0];
+	        id = arguments[1];
+	        key = arguments[2];
+	        fn = arguments[3];
+	    }
+	    
+	    if (!id) {
+	        for (sname in this._stores) {
+	            if (this._stores.hasOwnProperty(sname)) {
+	                this._stores[sname].on(type, function(type, args) {
+            			if (args.key === key) {
+            				fn(args.value);
+            			}
+            		});
+	            }
+	        }
+	    } else {
+    		this._stores[id].on(type, function(type, args) {
+    			if (args.key === key) {
+    				fn(args.value);
+    			}
+    		});
+	    }
 	}
 };

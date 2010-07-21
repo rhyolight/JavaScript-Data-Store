@@ -312,8 +312,7 @@ YUI().add('jsds_tests', function(Y) {
 		},
 		
 		tearDown : function () {
-			this.s.remove();
-			delete this.s;
+			JSDS.clear();
 		},
 		
 		test_OnStore_CallbackIsCalled: function () {
@@ -440,7 +439,7 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual(2, called, 'on remove callback for individual stores were not called on JSDS.clear()');
 		},
 		
-		test_StaticJSDS_On_function: function() {
+		test_StaticJSDS_OnStore_function: function() {
 			var ajaxCache = JSDS.create('ajaxCache'),
 				cityData = {
 					"Miami": "Florida",
@@ -450,7 +449,7 @@ YUI().add('jsds_tests', function(Y) {
 				retrievedCityData,
 				callbackCalled = false;
 		
-			JSDS.on('ajaxCache', 'store', 'cityData', function(cityData) {
+			JSDS.on('store', 'ajaxCache', 'cityData', function(cityData) {
 				callbackCalled = true;
 				retrievedCityData = cityData;
 			});
@@ -458,6 +457,63 @@ YUI().add('jsds_tests', function(Y) {
 			ajaxCache.store('cityData', cityData);
 			
 			a.isTrue(callbackCalled, 'Static JSDS callback not called on store');
+			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
+		},
+
+		test_StaticJSDS_OnGet_function: function() {
+			var ajaxCache = JSDS.create('ajaxCache'),
+				cityData = {
+					"Miami": "Florida",
+					"St. Louis": "Missouri",
+					"Chicago": "Illinois"
+				},
+				retrievedCityData,
+				callbackCalled = false;
+		
+			JSDS.on('get', 'ajaxCache', 'cityData', function(cityData) {
+				callbackCalled = true;
+				retrievedCityData = cityData;
+			});
+			
+			ajaxCache.store('cityData', cityData);
+			ajaxCache.get('cityData');
+			
+			a.isTrue(callbackCalled, 'Static JSDS callback not called on get');
+			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
+		},
+		
+		test_EventCallbacks_CanBeExecuted_WithinCustomScope: function() {
+		    this.wrestler = 'Rowdy Rodney Piper';
+			this.s.on('store', function() {
+			    this.wrestler = 'Hulk Hogan';
+			}, this);
+			
+			this.s.store('mama', 'mia');
+			
+			a.areEqual('Hulk Hogan', this.wrestler);
+			delete this.wrestler;
+		},
+		
+		test_StaticJSDS_OnStore_ForAllStoreObjects: function() {
+		    var ajaxCache = JSDS.create('ajaxCache'),
+		        otherCache = JSDS.create('otherCache'),
+				cityData = {
+					"Miami": "Florida",
+					"St. Louis": "Missouri",
+					"Chicago": "Illinois"
+				},
+				retrievedCityData,
+				callbackCalled = 0;
+		
+			JSDS.on('store', 'cityData', function(cityData) {
+				callbackCalled++;
+				retrievedCityData = cityData;
+			});
+			
+			ajaxCache.store('cityData', cityData);
+			otherCache.store('otherData', 'pencil');
+			
+			a.areEqual(callbackCalled, 1, 'Static JSDS callback not called correct number of times');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
 		}
 		

@@ -40,9 +40,9 @@ Outside of the logic that actually makes an ajax call, you can have code with th
 	// sometime on page load
 	JSDS.create('ajaxCache');
 	
-	JSDS.on('ajaxCache', 'store', 'ajaxData', function(data) {
-		// this gets called any time a JSDS store called 'ajaxCache' has data stored. The data
-		// is sent directly here
+	JSDS.on('store', 'ajaxCache', 'ajaxData', function(data) {
+		// this gets called any time a JSDS store called 'ajaxCache' has data stored under the key 'ajaxData'. 
+		// The data is sent directly here
 		renderCityDataIntoDom(data);
 	});
 	
@@ -57,3 +57,14 @@ Outside of the logic that actually makes an ajax call, you can have code with th
 	});
 
 This allows you to set up a generic ajax proxy that always executes the same callback function. That function just stores the returned JSON object into JSDS. Anything that has registered to receive events from JSDS will get this data sent directly to them. This allows you to add more JavaScript modules onto your page and sign them up to receive any data being returned through the ajax proxy without attaching a new callback in some DOM event handler. This way, the DOM event handler is generic and calls the ajax proxy without providing callback logic. When the response is received, JSDS fires the response data to any component that has registered to listen.
+
+### Using Instances
+
+It is just as easy to return instances of JSDS objects into local variables. Then you can listen for events coming from individual stores by calling `on` on them.
+
+	var myStore = JSDS.create('my store');
+	
+	myStore.on('store', 'cityData', function(type, data) {
+		var storedValue = args.value;
+	});
+	
