@@ -212,7 +212,31 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual('Scooby', result[0], 'Wrong dog name on update');
 		},
 
-		testStoreReturnsPreviousValue: function() {
+        testUsingWildcardInKey: function() {
+            var called = false;
+		    var val = {
+				animals: {
+					frogs: {
+					    number: 11,
+					    area: 'north'
+					},
+					lizards: {
+					    number: 24,
+					    area: 'east'
+					}
+				}
+			};
+			
+			this.s.store('stuff', val);
+			
+			this.s.on('update', 'animals.*.area', function(type, args) {
+			    called = true;
+			});
+			
+			a.isTrue(called, 'callback not called');
+		},
+
+        testStoreReturnsPreviousValue: function() {
 			this.s.store('city', 'Cupertino');
 			var prev = this.s.store('city', 'San Jose');
 			
