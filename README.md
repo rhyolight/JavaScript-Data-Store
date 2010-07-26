@@ -19,14 +19,14 @@ JSDS has a few static functions for creating and managing _stores_, which are th
 * `get(id)`: Returns an existing JSDS data store with the given id. If a store with the given id does not exist, returns `undefined`
 * `clear()`: Calls `remove` on all JSDS data stores in memory and resets to en empty list of stores
 * `count()`: Returns the current number of JSDS data stores that have been created in memory
-* `on(id, type, key, callback)`: Attaches given function as event handler for the specified type of event (store, get, clear, or remove). Callback is only called when the specified key is acted upon.
+* `on(type, options)`: Attaches given function as event handler for the specified type of event (store, get, clear, or remove). `options` can contain "id", "key", and a "callback" object. If a key or store id are specified, the callback is only called when the specified id and/or key is acted upon.
 
 Each JSDS data store object created will have the following instance methods:
 
 * `getId()`: Returns the id of the data store
 * `store(key, value)`: Stores the given value for the given key
 * `get(key)`: Retrieves the value for given key, or undefined if it doesn't exist
-* `on(type, callback)`: Attaches given function as event handler for the specified type of event (store, get, clear, or remove). Callback is passed different parameters depending on the type of event.
+* `on(type, options)`: Attaches given function as event handler for the specified type of event (store, get, clear, or remove). Callback is passed different parameters depending on the type of event.
 * `clear()`: Removes all stored data from the store
 * `remove()`: Removes all stored data from the store and deletes store reference within JSDS (for full deletion, any outside references must also be deleted)
 
