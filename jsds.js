@@ -31,9 +31,10 @@ JSDS = {
 			this._l = {};
 			this.id = id;
 		}
+		
 		// public methods
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
-			var result;
+			var result, keyString = '';
 			
 			opts = opts || { update: false };
 			
@@ -48,8 +49,9 @@ JSDS = {
 				}
 				result = oldVal ? oldVal[key] : store[key];
 				// if this is an update, and there is an old value to update
-				if (opts.update && result) {
-				    _update(store, val, key);
+				if (opts.update) {
+				    keyString = _update(store, val, key);
+				    console.log(keyString);
 				} 
 				// if not an update, just overwrite old value
 				else {
@@ -59,9 +61,10 @@ JSDS = {
 			}
 			
 			result = _store(this._s, key, val);
-			_fire.call(this, 'store', {key: key, value: val, id: this.id});
+			_fire.call(this, 'store', {key: keyString, value: val, id: this.id});
 			return result;
 		};
+		
 		JSDataStore.prototype.get = function(key) {
 			var s = this._s, keys, i=0, j=0, v, result;
 			
@@ -90,17 +93,35 @@ JSDS = {
 			_fire.call(this, 'get', {key:key, value:result});
 			return result;
 		};
-		JSDataStore.prototype.on = function(type, fn, scope) {
+		
+		JSDataStore.prototype.on = function() {
+			var type = arguments[0], fn, scope, pname, keys;
+			if (typeof arguments[1] === 'object') {
+				fn = arguments[1].callback;
+				scope = arguments[1].scope;
+				if (arguments[1].keys) {
+					keys = arguments[1].keys;
+				} else if (arguments[1].key) {
+					keys = [arguments[1].key];
+				} else {
+					keys = [];
+				}
+			} else {
+				fn = arguments[1];
+				scope = arguments[2];
+			}
 			if (!this._l[type]) {
 				this._l[type] = [];
 			}
 			scope = scope || this;
-			this._l[type].push({fn:fn, scope:scope});
+			this._l[type].push({callback:fn, scope:scope, keys: keys});
 		};
+		
 		JSDataStore.prototype.clear = function() {
 			this._s = {};
 			_fire.call(this, 'clear');
 		};
+		
 		JSDataStore.prototype.remove = function() {
 		    var ltype, optsArray, opts, i;
 			this.clear();
@@ -118,48 +139,53 @@ JSDS = {
 			delete jsds._stores[this.id];
 			_fire.call(this, 'remove');
 		};
+		
 		// private methods
 		function _update(store, val, key) {
 		    var vprop;
 		    if (typeof val !== 'object' || val instanceof Array) {
     		    store[key] = val;
-    		    return;
+    		    return key;
 		    }
 		    for (vprop in val) {
 		        if (val.hasOwnProperty(vprop)) {
 		            if (store[key].hasOwnProperty(vprop)) {
 		                // update existing values
-		                _update(store[key], val[vprop], vprop);
+		                return key + '.' + _update(store[key], val[vprop], vprop);
 		            } else {
 		                // set non-existing values
 		                store[key][vprop] = val[vprop];
+		                return key + '.' + vprop;
 		            }
 		        }
 		    }
 		}
+		
 		function _fire(type, args) {
-			var i, ltype, ls = this._l[type], lname, optsArray, opts, scope;
-			// local listeners
-			if (ls) {
-    			args = args || {};
-    			for (i=0; i<ls.length; i++) {
-    				ls[i].fn.call(ls[i].scope, type, args);
-    			}
-			}
-			// static listeners
+			var i, ltype, localListeners = this._l[type] || [], staticListeners, lname, optsArray = [], opts, scope, listeners;
+			args = args || {};
+			
+			// gather static listeners
 			for (ltype in JSDS._listeners) {
 		        if (JSDS._listeners.hasOwnProperty(ltype) && type === ltype) {
 		            optsArray = JSDS._listeners[ltype];
-		            for (i=0; i<optsArray.length; i++) {
-		                opts = optsArray[i];
-		                if ((!opts.id || opts.id === this.id) && (!opts.key || opts.key === args.key)) {
-                    		scope = opts.scope || this;
-                    		opts.callback.call(scope, args);    
-		                }
-		            }
 		        }
 		    }
+			
+			// mix local listeners
+			listeners = localListeners.concat(optsArray);
+			
+			if (listeners.length) {
+				for (i=0; i<listeners.length; i++) {
+					opts = listeners[i];
+					if ((!opts.id || opts.id === this.id) && (!opts.key || opts.key === args.key)) {
+		        		scope = opts.scope || this;
+		        		opts.callback.call(scope, type, args);    
+		            }
+				}
+			}
 		}
+		
 		function _clone(val) {
 			var newObj, i, prop;
 			if (val instanceof Array) {
@@ -179,6 +205,7 @@ JSDS = {
 			}
 			return newObj;
 		}
+		
 		function _getValue(store, keys) {
 			var key = keys.shift(), endKey;
 			if (store[key][keys[0]]) {

@@ -136,7 +136,7 @@ YUI().add('jsds_tests', function(Y) {
 			};
 			this.s.store('chicken', chicken);
 			
-			var newchick = { eggs: 4}
+			var newchick = { eggs: 4};
 			
 			a.areEqual('Susie', this.s.get('chicken.name'));
 			a.areEqual(3, this.s.get('chicken', 'eggs'));
@@ -485,6 +485,24 @@ YUI().add('jsds_tests', function(Y) {
 			a.isTrue(called, 'callback for on store event never called');
 		},
 		
+		test_On_Function_CanBePassed_Options: function() {
+			var called = false;
+			var fakeScope = {};
+			this.s.on('store', {
+				callback: function(type, args) {
+					called = true;
+					a.areEqual('mama', args.key, 'on store callback passed wrong key');
+					a.areEqual('mia', args.value, 'on store callback passed wrong value');
+					a.areSame(fakeScope, this, 'bad scope');
+				},
+				scope: fakeScope
+			});
+			
+			this.s.store('mama', 'mia');
+			
+			a.isTrue(called, 'callback for on store event never called');
+		},
+		
 		test_OnGet_CallbackIsCalled: function () {
 			var called = false;
 			this.s.on('get', function() {
@@ -585,7 +603,7 @@ YUI().add('jsds_tests', function(Y) {
 			JSDS.on('store', {
 			    id: 'ajaxCache', 
 		        key: 'cityData', 
-		        callback: function(data) {
+		        callback: function(type, data) {
 		    	    callbackCalled = true;
 				    retrievedCityData = data.value;
 			    }
@@ -610,7 +628,7 @@ YUI().add('jsds_tests', function(Y) {
 			JSDS.on('get', {
 			    id:'ajaxCache', 
 			    key:'cityData', 
-			    callback:function(data) {
+			    callback:function(type, data) {
 				    callbackCalled = true;
 				    retrievedCityData = data.value;
 			    }
@@ -636,7 +654,7 @@ YUI().add('jsds_tests', function(Y) {
 		
 			JSDS.on('store', {
 			    key:'cityData', 
-			    callback: function(data) {
+			    callback: function(type, data) {
 				    callbackCalled++;
 				    retrievedCityData = data.value;
 			    }
@@ -662,7 +680,7 @@ YUI().add('jsds_tests', function(Y) {
 				callbackCalled = 0;
 		
 			JSDS.on('store', {
-			    callback: function(data) {
+			    callback: function(type, data) {
 				    callbackCalled++;
 				    if (data.key === 'cityData') {
     				    retrievedCityData = data.value;
@@ -708,6 +726,51 @@ YUI().add('jsds_tests', function(Y) {
 		    delete s;
 		    
 		    a.areEqual((numListeners - 1), JSDS._listeners.store.length, 'Removing store did not remove static listeners!');
+		},
+		
+		testProperCallbackCalledOnUpdate: function() {
+			var val = {
+				animals: {
+					reptiles: {
+						turtles: ['Victor']
+					},
+					mammals: {
+						primates: {
+							humans: {
+								Taylors: ['Matt', 'Trinity', 'Dean', 'Romy']
+							}
+						},
+						dogs: ['Sasha', 'Ann-Marie']
+					}
+				}
+			};
+			
+			this.s.store('stuff', val);
+			
+			var dogCallbackCalled = false;
+			
+			this.s.on('store', {
+				key: 'animals.mammals.primates.dogs',
+				callback: function(type, args) {
+					dogCallbackCalled = true;
+				}
+			});
+			
+			this.s.store('animals', {
+				reptiles: {
+					turtles: ['skank']
+				}
+			}, {update: true});
+			
+			a.isFalse(dogCallbackCalled, 'callback was called when no dog data was updated');
+			
+			this.s.store('animals', {
+				mammals: {
+					dogs: ['Buttons', 'Teela']
+				}
+			}, {update: true});
+			
+			a.isTrue(dogCallbackCalled, 'callback was not called for dog update');
 		}
 		
 	}));
