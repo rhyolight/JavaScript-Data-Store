@@ -1,7 +1,8 @@
 YUI().add('jsds_tests', function(Y) {
 
 	var suite = new Y.Test.Suite("JSDS_Suite"),
-		a = Y.Assert;
+		a = Y.Assert,
+		aa = Y.ArrayAssert;
 
 	suite.add(new Y.Test.Case({
 	
@@ -15,18 +16,15 @@ YUI().add('jsds_tests', function(Y) {
 			var store = JSDS.create('store1');
 			
 			a.isNotUndefined(store, 'create returned undefined');
-			a.isNotUndefined(store.getId, 'new store has no getId function');
-			a.isFunction(store.getId, 'new store.getId is not a function');
-			a.areEqual('store1', store.getId(), 'wrong id was returned');
-			a.areEqual('store1', store.getId(), 'new store returned wrong name');
+			a.isNotUndefined(store.id, 'new store has no id');
+			a.areEqual('store1', store.id, 'wrong id was returned');
 			
 			var store2 = JSDS.create('store2');
 			
 			a.areNotSame(store, store2, 'stores created should not be same obj');
 			a.isNotUndefined(store2, 'create returned undefined');
-			a.isNotUndefined(store2.getId, 'new store has no getId function');
-			a.isFunction(store2.getId, 'new store.getId is not a function');
-			a.areEqual('store2', store2.getId(), 'new store returned wrong name');
+			a.isNotUndefined(store2.id, 'new store has no id');
+			a.areEqual('store2', store2.id, 'new store returned wrong id');
 		},
 		
 		testGetCreatedStore: function() {
@@ -49,7 +47,7 @@ YUI().add('jsds_tests', function(Y) {
 		
 		testStoreCreationWithoutIdentifier: function() {
 			var jsds = JSDS.create();
-			var id = jsds.getId();
+			var id = jsds.id;
 			a.isNotNull(id, 'generated id was null');
 		},
 		
@@ -60,6 +58,20 @@ YUI().add('jsds_tests', function(Y) {
 			}
 			
 			a.areEqual(100, JSDS.count());
+		},
+		
+		testGetStoreIds: function() {
+		    JSDS.create('a');
+		    JSDS.create('b');
+		    JSDS.create('c');
+		    
+		    var result = JSDS.ids();
+		    
+		    a.isArray(result, 'ids were not array');
+		    a.areEqual(3, result.length, 'ids array wrong size');
+		    aa.contains('a', result, 'missing id!');
+		    aa.contains('b', result, 'missing id!');
+		    aa.contains('c', result, 'missing id!');
 		}
 		
 	}));
@@ -117,8 +129,114 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual('Susie', this.s.get('chicken.name'));
 			a.areEqual(3, this.s.get('chicken', 'eggs'));
 		},
+		
+		testUpdatingDoesntClobberExistingData: function() {
+		    var chicken = {
+				name: 'Susie', eggs: 3, farm:'Hillsboro Farms'
+			};
+			this.s.store('chicken', chicken);
+			
+			var newchick = { eggs: 4}
+			
+			a.areEqual('Susie', this.s.get('chicken.name'));
+			a.areEqual(3, this.s.get('chicken', 'eggs'));
+			
+			this.s.store('chicken', newchick, {update: true});
+			
+			a.areEqual(4, this.s.get('chicken', 'eggs'));
+			a.areEqual('Susie', this.s.get('chicken.name'));
+			a.areEqual('Hillsboro Farms', this.s.get('chicken.farm'));
+		},
+		
+		testUpdatingDoesntClobberExistingData_DeepStructure: function() {
+		    var val = {
+				animals: {
+					reptiles: {
+						turtles: ['Victor']
+					},
+					mammals: {
+						primates: {
+							humans: {
+								Taylors: ['Matt', 'Trinity', 'Dean', 'Romy']
+							}
+						},
+						dogs: ['Sasha', 'Ann-Marie']
+					}
+				}
+			};
+			
+			this.s.store('stuff', val);
+			
+			var newVal = {
+				animals: {
+					reptiles: {
+						lizards: ['Izzy']
+					},
+					mammals: {
+						primates: {
+							humans: {
+								Simpsons: ['Homer', 'Bart', 'Marge', 'Lisa', 'Maggie']
+							}
+						},
+						dogs: ['Scooby']
+					}
+				}
+			};
+			
+			this.s.store('stuff', newVal, { update: true });
+			
+			var result = this.s.get('stuff.animals.reptiles.turtles');
+			a.isArray(result, 'result should have been an array');
+			a.areEqual(1, result.length, 'result should have length of 1');
+			a.areEqual('Victor', result[0]);
 
-		testStoreReturnsPreviousValue: function() {
+			result = this.s.get('stuff.animals.reptiles.lizards');
+			a.isArray(result, 'result should have been an array');
+			a.areEqual(1, result.length, 'result should have length of 1');
+			a.areEqual('Izzy', result[0]);
+			
+			result = this.s.get('stuff.animals.mammals.primates.humans');
+			a.isObject(result, 'result should have been an object');
+			a.isNotUndefined(result.Taylors, 'old value was clobbered: "Taylors"');
+			a.areEqual(4, result.Taylors.length, 'result should have length of 4');
+			a.isNotUndefined(result.Simpsons, 'new value was not added: "Simpsons"');
+			a.areEqual(5, result.Simpsons.length, 'result should have length of 5');
+			a.areEqual('Matt', result.Taylors[0]);
+			a.areEqual('Romy', result.Taylors[3]);
+			a.areEqual('Homer', result.Simpsons[0]);
+			a.areEqual('Lisa', result.Simpsons[3]);
+			
+			result = this.s.get('stuff.animals.mammals.dogs');
+			a.isArray(result, 'result should have been array');
+			a.areEqual(1, result.length, 'array should have been 1');
+			a.areEqual('Scooby', result[0], 'Wrong dog name on update');
+		},
+
+        testUsingWildcardInKey: function() {
+            var called = false;
+		    var val = {
+				animals: {
+					frogs: {
+					    number: 11,
+					    area: 'north'
+					},
+					lizards: {
+					    number: 24,
+					    area: 'east'
+					}
+				}
+			};
+			
+			this.s.store('stuff', val);
+			
+			this.s.on('update', 'animals.*.area', function(type, args) {
+			    called = true;
+			});
+			
+			a.isTrue(called, 'callback not called');
+		},
+
+        testStoreReturnsPreviousValue: function() {
 			this.s.store('city', 'Cupertino');
 			var prev = this.s.store('city', 'San Jose');
 			
@@ -180,6 +298,9 @@ YUI().add('jsds_tests', function(Y) {
 			var result = this.s.get('stuff');
 			
 			a.isObject(result, 'result should have been an object');
+			
+			result = this.s.get('stuff.animals.reptiles.lizards');
+			a.isUndefined(result, 'query for lizards should be undefined');
 			
 			result = this.s.get('stuff', 'animals', 'reptiles', 'turtles');
 			a.isArray(result, 'result should have been an array');
@@ -439,7 +560,19 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual(2, called, 'on remove callback for individual stores were not called on JSDS.clear()');
 		},
 		
-		test_StaticJSDS_OnStore_function: function() {
+		test_EventCallbacks_CanBeExecuted_WithinCustomScope: function() {
+		    this.wrestler = 'Rowdy Rodney Piper';
+			this.s.on('store', function() {
+			    this.wrestler = 'Hulk Hogan';
+			}, this);
+			
+			this.s.store('mama', 'mia');
+			
+			a.areEqual('Hulk Hogan', this.wrestler);
+			delete this.wrestler;
+		},
+		
+        test_StaticJSDS_OnStore_function: function() {
 			var ajaxCache = JSDS.create('ajaxCache'),
 				cityData = {
 					"Miami": "Florida",
@@ -490,18 +623,6 @@ YUI().add('jsds_tests', function(Y) {
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
 		},
 		
-		test_EventCallbacks_CanBeExecuted_WithinCustomScope: function() {
-		    this.wrestler = 'Rowdy Rodney Piper';
-			this.s.on('store', function() {
-			    this.wrestler = 'Hulk Hogan';
-			}, this);
-			
-			this.s.store('mama', 'mia');
-			
-			a.areEqual('Hulk Hogan', this.wrestler);
-			delete this.wrestler;
-		},
-		
 		test_StaticJSDS_OnStore_ForAllStoreObjects: function() {
 		    var ajaxCache = JSDS.create('ajaxCache'),
 		        otherCache = JSDS.create('otherCache'),
@@ -524,7 +645,7 @@ YUI().add('jsds_tests', function(Y) {
 			ajaxCache.store('cityData', cityData);
 			otherCache.store('otherData', 'pencil');
 			
-			a.areEqual(callbackCalled, 1, 'Static JSDS callback not called correct number of times');
+			a.areEqual(1, callbackCalled, 'Static JSDS callback not called correct number of times');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
 		},
 		
@@ -556,6 +677,37 @@ YUI().add('jsds_tests', function(Y) {
 			
 			a.areEqual(callbackCalled, 2, 'Static JSDS callback not called correct number of times');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
+		},
+		
+		test_StoresFireEvents_ToEventHandlers_CreatedBeforeStoreWasCreated: function() {
+		    var called = false;
+		    JSDS.on('store', {
+		        callback: function() {
+		            called = true;
+		        }
+		    });
+		    
+		    var s = JSDS.create();
+		    
+		    s.store('color', 'red');
+		    
+		    a.isTrue(called, 'Callback was never called for store created after event handler attached!');
+		},
+		
+		test_RemovingStore_DeletesStaticListeners_MatchingStoreId: function() {
+		    var s = JSDS.create('removeTest');
+		    
+		    JSDS.on('store', {
+		        id: 'removeTest',
+		        callback: function() {}
+		    });
+		    
+		    var numListeners = JSDS._listeners.store.length;
+		    
+		    s.remove();
+		    delete s;
+		    
+		    a.areEqual((numListeners - 1), JSDS._listeners.store.length, 'Removing store did not remove static listeners!');
 		}
 		
 	}));

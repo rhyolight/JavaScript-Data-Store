@@ -1,6 +1,7 @@
 JSDS = {
 	
 	_stores: {},
+	_listeners: {},
 	
 	create: function(id) {
 		
@@ -26,18 +27,17 @@ JSDS = {
 		/* The JSDataStore class 
 		/************************************************************************/
 		function JSDataStore(id) {
-			this.s = {};
-			this.listeners = {};
+			this._s = {};
+			this._l = {};
 			this.id = id;
 		}
 		// public methods
-		JSDataStore.prototype.getId = function() {
-			return this.id;
-		};
-		JSDataStore.prototype.store = function(key, val) {
+		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
 			var result;
 			
-			function _store(store, key, val, oldVal /* optional */) {
+			opts = opts || { update: false };
+			
+			function _store(store, key, val, oldVal /*optional*/) {
 				var result, keys, prevKey, currStore, oldKey, oldVal;
 				if (key.indexOf('\.') >= 0) {
 					keys = key.split('.');
@@ -47,16 +47,23 @@ JSDS = {
 					return _store(store[oldKey], keys, val, oldVal);
 				}
 				result = oldVal ? oldVal[key] : store[key];
-				store[key] = val;
+				// if this is an update, and there is an old value to update
+				if (opts.update && result) {
+				    _update(store, val, key);
+				} 
+				// if not an update, just overwrite old value
+				else {
+    				store[key] = val;
+				}
 				return result;
 			}
 			
-			result = _store(this.s, key, val);
-			_fire('store', this.listeners, {key: key, value: val, id: this.id});
+			result = _store(this._s, key, val);
+			_fire.call(this, 'store', {key: key, value: val, id: this.id});
 			return result;
 		};
 		JSDataStore.prototype.get = function(key) {
-			var s = this.s, keys, i=0, j=0, v, result;
+			var s = this._s, keys, i=0, j=0, v, result;
 			
 			if (arguments.length === 1 && key.indexOf('\.') < 0) {
 				result = s[key];
@@ -80,34 +87,78 @@ JSDS = {
 				result = _getValue(s, keys);
 			}
 			
-			_fire('get', this.listeners, {key:key, value:result});
+			_fire.call(this, 'get', {key:key, value:result});
 			return result;
 		};
 		JSDataStore.prototype.on = function(type, fn, scope) {
-			if (!this.listeners[type]) {
-				this.listeners[type] = [];
+			if (!this._l[type]) {
+				this._l[type] = [];
 			}
 			scope = scope || this;
-			this.listeners[type].push({fn:fn, scope:scope});
+			this._l[type].push({fn:fn, scope:scope});
 		};
 		JSDataStore.prototype.clear = function() {
-			this.s = {};
-			_fire('clear', this.listeners);
+			this._s = {};
+			_fire.call(this, 'clear');
 		};
 		JSDataStore.prototype.remove = function() {
+		    var ltype, optsArray, opts, i;
 			this.clear();
-			delete jsds._stores[this.getId()];
-			_fire('remove', this.listeners);
+			for (ltype in JSDS._listeners) {
+		        if (JSDS._listeners.hasOwnProperty(ltype)) {
+		            optsArray = JSDS._listeners[ltype];
+		            for (i=0; i<optsArray.length; i++) {
+		                opts = optsArray[i];
+		                if (!opts.id || opts.id === this.id) {
+                    		optsArray.splice(i,1);
+		                }
+		            }
+		        }
+		    }
+			delete jsds._stores[this.id];
+			_fire.call(this, 'remove');
 		};
 		// private methods
-		function _fire(type, listeners, args) {
-			var i, ls = listeners[type];
-			if (!ls) { return ; }
-			args = args || {};
-			for (i=0; i<ls.length; i++) {
-			    
-				ls[i].fn.call(ls[i].scope, type, args);
+		function _update(store, val, key) {
+		    var vprop;
+		    if (typeof val !== 'object' || val instanceof Array) {
+    		    store[key] = val;
+    		    return;
+		    }
+		    for (vprop in val) {
+		        if (val.hasOwnProperty(vprop)) {
+		            if (store[key].hasOwnProperty(vprop)) {
+		                // update existing values
+		                _update(store[key], val[vprop], vprop);
+		            } else {
+		                // set non-existing values
+		                store[key][vprop] = val[vprop];
+		            }
+		        }
+		    }
+		}
+		function _fire(type, args) {
+			var i, ltype, ls = this._l[type], lname, optsArray, opts, scope;
+			// local listeners
+			if (ls) {
+    			args = args || {};
+    			for (i=0; i<ls.length; i++) {
+    				ls[i].fn.call(ls[i].scope, type, args);
+    			}
 			}
+			// static listeners
+			for (ltype in JSDS._listeners) {
+		        if (JSDS._listeners.hasOwnProperty(ltype) && type === ltype) {
+		            optsArray = JSDS._listeners[ltype];
+		            for (i=0; i<optsArray.length; i++) {
+		                opts = optsArray[i];
+		                if ((!opts.id || opts.id === this.id) && (!opts.key || opts.key === args.key)) {
+                    		scope = opts.scope || this;
+                    		opts.callback.call(scope, args);    
+		                }
+		            }
+		        }
+		    }
 		}
 		function _clone(val) {
 			var newObj, i, prop;
@@ -129,11 +180,16 @@ JSDS = {
 			return newObj;
 		}
 		function _getValue(store, keys) {
-			var key = keys.shift();
+			var key = keys.shift(), endKey;
 			if (store[key][keys[0]]) {
 				return _getValue(store[key], keys);
 			} else {
-				return store[key];
+			    if (keys.length) {
+			        endKey = keys[0];
+			    } else {
+			        endKey = key;
+			    }
+				return store[endKey];
 			}
 		}
 		/************************************************************************
@@ -170,25 +226,20 @@ JSDS = {
 		return cnt;
 	},
 	
-	on: function(type, o) {
-	    var sname;
-	    
-	    function wrapCallback(type, store, cb, key) {
-	        store.on(type, function(type, args) {
-    			if (!key || args.key === key) {
-    				cb({key: args.key, value: args.value});
-    			}
-    		});
-	    }
-	    
-	    if (!o.id) {
-	        for (sname in this._stores) {
-	            if (this._stores.hasOwnProperty(sname)) {
-	                wrapCallback(type, this._stores[sname], o.callback, o.key);
-	            }
+	ids: function() {
+	    var id, ids = [];
+	    for (id in this._stores) {
+	        if (this._stores.hasOwnProperty(id)) {
+	            ids.push(id);
 	        }
-	    } else {
-	        wrapCallback(type, this._stores[o.id], o.callback, o.key);
 	    }
+	    return ids;
+	},
+	
+	on: function(type, o) {
+	    if (!this._listeners[type]) {
+			this._listeners[type] = [];
+		}
+		this._listeners[type].push(o);
 	}
 };

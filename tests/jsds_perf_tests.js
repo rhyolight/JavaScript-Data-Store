@@ -28,13 +28,14 @@ YUI().add('jsds_tests', function(Y) {
             JSDS._stores = {};
         },
         
-        testStuff: function() {
-            var i, start, end, j, ids =[], vals = [];
+        testJSDS_Performance: function() {
+            var i, start, end, j, ids =[], vals = [], cnt = 1000;
             
-            for (i=0; i<10000; i++) {
+            for (i=0; i<cnt; i++) {
                 ids.push(randomId() + '.' + randomId() + '.' + randomId());
                 vals.push(randomId());
             }
+            
             j = JSDS.create('yo');
             
             start = timer();
@@ -49,7 +50,9 @@ YUI().add('jsds_tests', function(Y) {
             
             end = timer();
             
-            alert((end - start));
+            var timeForOne = (end - start)/cnt;
+            
+            a.isTrue(timeForOne < 0.5, 'Over ' + cnt + ' times, each count was ' + timeForOne + 'ms, which is higher than the 0.5ms threshhold!');
         }
         
     }));

@@ -17,14 +17,15 @@ body {
 }
 </style> 
 
+<!-- online -->
 <link type="text/css" rel="stylesheet" href="http://yui.yahooapis.com/combo?3.1.1/build/cssfonts/fonts-min.css" /> 
 <script type="text/javascript" src="http://yui.yahooapis.com/combo?3.1.1/build/yui/yui-min.js"></script>
-
+<!-- -->
 <!-- offline 
 <link type="text/css" rel="stylesheet" href="/Users/mtaylor/dev/javascript/yui/yui3/build/cssfonts/fonts-min.css" /> 
 <script type="text/javascript" src="/Users/mtaylor/dev/javascript/yui/yui3/build/yui/yui-min.js"></script> 
 -->
- 
+
 <!--begin custom header content for this example--> 
 <style type="text/css"> 
 #testLogger {
@@ -65,6 +66,7 @@ YUI().use("console", "test", "jsds_tests", function (Y) {
 	//create the console
     var r = new Y.Console({
         newestOnTop : false,
+		width: "500px",
         style: 'block' // to anchor in the example content
     });
     
