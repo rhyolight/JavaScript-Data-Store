@@ -212,30 +212,6 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual('Scooby', result[0], 'Wrong dog name on update');
 		},
 
-        testUsingWildcardInKey: function() {
-            var called = false;
-		    var val = {
-				animals: {
-					frogs: {
-					    number: 11,
-					    area: 'north'
-					},
-					lizards: {
-					    number: 24,
-					    area: 'east'
-					}
-				}
-			};
-			
-			this.s.store('stuff', val);
-			
-			this.s.on('update', 'animals.*.area', function(type, args) {
-			    called = true;
-			});
-			
-			a.isTrue(called, 'callback not called');
-		},
-
         testStoreReturnsPreviousValue: function() {
 			this.s.store('city', 'Cupertino');
 			var prev = this.s.store('city', 'San Jose');
@@ -513,6 +489,10 @@ YUI().add('jsds_tests', function(Y) {
 		        key: 'taco.town',
 		        callback: function(type, args) {
 		            called = true;
+		            a.isArray(args.keys, 'was not passed keys array to callback');
+    				a.areEqual(1, args.keys.length, 'wrong number of keys sent to callback');
+    				a.areEqual('taco.town', args.keys[0], 'on store callback passed wrong key');
+					a.areEqual('yay', args.value, 'on store callback passed wrong value');
 		        }
 		    });
 		    
@@ -772,7 +752,7 @@ YUI().add('jsds_tests', function(Y) {
 			var dogCallbackCalled = false;
 			
 			this.s.on('store', {
-				key: 'animals.mammals.dogs',
+				key: 'stuff.animals.mammals.dogs',
 				callback: function(type, args) {
 					dogCallbackCalled = true;
 				}
@@ -793,6 +773,35 @@ YUI().add('jsds_tests', function(Y) {
 			}, {update: true});
 			
 			a.isTrue(dogCallbackCalled, 'callback was not called for dog update');
+		},
+		
+		testUsingWildcardInKey: function() {
+            var called = false;
+		    var val = {
+				animals: {
+					frogs: {
+					    number: 11,
+					    area: 'north'
+					},
+					lizards: {
+					    number: 24,
+					    area: 'east'
+					}
+				}
+			};
+			
+			this.s.store('stuff', val);
+			
+			this.s.on('store', {
+			    key: 'stuff.animals.*.area', 
+			    callback: function(type, args) {
+			        called = true;
+			    }
+			});
+			
+			this.s.store('stuff.animals.frogs.area', 'south');
+			
+			a.isTrue(called, 'callback not called');
 		}
 		
 	}));

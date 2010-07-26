@@ -34,7 +34,7 @@ JSDS = {
 		
 		// public methods
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
-			var result, updatedKeys = [key];
+			var i, firstKey, result, updatedKeys = [key];
 			
 			opts = opts || { update: false };
 			
@@ -45,6 +45,7 @@ JSDS = {
 					oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
 					// store[keys[0]] = {};
 					oldKey = keys.shift();
+					updatedKeys.push(oldKey);
 					if (store[oldKey] === undefined) {
 					    store[oldKey] = {};
 					}
@@ -63,6 +64,15 @@ JSDS = {
 			}
 			
 			result = _store(this._s, key, val);
+			
+			// prepend all updatedKeys with the base node name
+			firstKey = key.split('.').length ? key.split('.')[0] : key;
+			for (i=0; i<updatedKeys.length; i++) {
+			    if (updatedKeys[i] !== firstKey) {
+    			    updatedKeys[i] = firstKey + '.' + updatedKeys[i];
+			    }
+			}
+			
 			_fire.call(this, 'store', {keys: updatedKeys, value: val, id: this.id});
 			return result;
 		};
@@ -172,20 +182,27 @@ JSDS = {
 		    return updatedKeys
 		}
 		
-		function _arrayContains(arr, val) {
+		function _arrayContains(arr, val, comparator /* optional */) {
 		    var i=0;
+		    comparator = comparator || function(lhs, rhs) {
+		        return lhs === rhs;
+		    };
 		    for (;i<arr.length;i++) {
-		        if (arr[i] === val) {
+		        if (comparator(arr[i], val)) {
 		            return true;
 		        }
 		    }
 		    return false;
 		}
 		
-		function _arrayContainsAny(haystack, needle) {
-		    var i=0;
+		function _hasMatchingKey(haystack, needle) {
+		    var i=0, match;
 		    for (;i<needle.length; i++) {
-		        if (_arrayContains(haystack, needle[i])) {
+		        match = _arrayContains(haystack, needle[i], function(lhs, rhs) {
+		            console.log ('Matching ' + lhs + ' and ' + rhs);
+		            return lhs.search(rhs) > -1;
+		        });
+		        if (match) {
 		            return true;
 		        }
 		    }
@@ -208,7 +225,7 @@ JSDS = {
 					if (opts.key && !opts.keys) {
 					    opts.keys = [opts.key];
 					}
-					if ((!opts.id || opts.id === this.id) && (!opts.keys || !opts.keys.length || _arrayContainsAny(args.keys, opts.keys))) {
+					if ((!opts.id || opts.id === this.id) && (!opts.keys || !opts.keys.length || _hasMatchingKey(args.keys, opts.keys))) {
 		        		scope = opts.scope || this;
 		        		opts.callback.call(scope, type, args);    
 		            }
