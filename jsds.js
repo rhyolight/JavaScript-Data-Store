@@ -34,7 +34,7 @@ JSDS = {
 		
 		// public methods
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
-			var result, keyString = '';
+			var result, updatedKeys = [key];
 			
 			opts = opts || { update: false };
 			
@@ -50,8 +50,7 @@ JSDS = {
 				result = oldVal ? oldVal[key] : store[key];
 				// if this is an update, and there is an old value to update
 				if (opts.update) {
-				    keyString = _update(store, val, key);
-				    console.log(keyString);
+				    updatedKeys = _update(store, val, key);
 				} 
 				// if not an update, just overwrite old value
 				else {
@@ -61,7 +60,7 @@ JSDS = {
 			}
 			
 			result = _store(this._s, key, val);
-			_fire.call(this, 'store', {key: keyString, value: val, id: this.id});
+			_fire.call(this, 'store', {keys: updatedKeys, value: val, id: this.id});
 			return result;
 		};
 		
@@ -90,7 +89,7 @@ JSDS = {
 				result = _getValue(s, keys);
 			}
 			
-			_fire.call(this, 'get', {key:key, value:result});
+			_fire.call(this, 'get', {keys:[key], value:result});
 			return result;
 		};
 		
@@ -142,43 +141,62 @@ JSDS = {
 		
 		// private methods
 		function _update(store, val, key) {
-		    var vprop;
+		    var i, vprop, updatedKeys = [], tmpKeys, newUKey;
 		    if (typeof val !== 'object' || val instanceof Array) {
     		    store[key] = val;
-    		    return key;
+    		    updatedKeys.push(key);
+		    } else {
+    		    for (vprop in val) {
+    		        if (val.hasOwnProperty(vprop)) {
+    		            updatedKeys.push(key);
+    		            if (store[key].hasOwnProperty(vprop)) {
+    		                // update existing values
+    		                tmpKeys = _update(store[key], val[vprop], vprop);
+    		                for (i=0; i<tmpKeys.length; i++) {
+    		                    newUKey = key + '.' + tmpKeys[i];
+    		                    if (!_arrayContains(updatedKeys, newUKey)) {
+    		                        updatedKeys.push(newUKey);
+		                        }
+    		                }
+    		            } else {
+    		                // set non-existing values
+    		                store[key][vprop] = val[vprop];
+    		                updatedKeys.push(key + '.' + vprop);
+    		            }
+    		        }
+    		    }
 		    }
-		    for (vprop in val) {
-		        if (val.hasOwnProperty(vprop)) {
-		            if (store[key].hasOwnProperty(vprop)) {
-		                // update existing values
-		                return key + '.' + _update(store[key], val[vprop], vprop);
-		            } else {
-		                // set non-existing values
-		                store[key][vprop] = val[vprop];
-		                return key + '.' + vprop;
-		            }
+		    return updatedKeys
+		}
+		
+		function _arrayContains(arr, val) {
+		    var i=0;
+		    for (;i<arr.length;i++) {
+		        if (arr[i] === val) {
+		            return true;
 		        }
 		    }
+		    return false;
 		}
 		
 		function _fire(type, args) {
-			var i, ltype, localListeners = this._l[type] || [], staticListeners, lname, optsArray = [], opts, scope, listeners;
+			var i, ltype, localListeners = this._l[type] || [], lname, staticListeners = [], opts, scope, listeners;
 			args = args || {};
 			
 			// gather static listeners
 			for (ltype in JSDS._listeners) {
 		        if (JSDS._listeners.hasOwnProperty(ltype) && type === ltype) {
-		            optsArray = JSDS._listeners[ltype];
+		            staticListeners = JSDS._listeners[ltype];
 		        }
 		    }
 			
 			// mix local listeners
-			listeners = localListeners.concat(optsArray);
+			listeners = localListeners.concat(staticListeners);
 			
 			if (listeners.length) {
 				for (i=0; i<listeners.length; i++) {
 					opts = listeners[i];
-					if ((!opts.id || opts.id === this.id) && (!opts.key || opts.key === args.key)) {
+					if ((!opts.id || opts.id === this.id) && (!opts.key || _arrayContains(args.keys, opts.key))) {
 		        		scope = opts.scope || this;
 		        		opts.callback.call(scope, type, args);    
 		            }

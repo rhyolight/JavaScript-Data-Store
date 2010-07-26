@@ -476,7 +476,9 @@ YUI().add('jsds_tests', function(Y) {
 			var called = false;
 			this.s.on('store', function(type, args) {
 				called = true;
-				a.areEqual('mama', args.key, 'on store callback passed wrong key');
+				a.isArray(args.keys, 'was not passed keys array to callback');
+				a.areEqual(1, args.keys.length, 'wrong number of keys sent to callback');
+				a.areEqual('mama', args.keys[0], 'on store callback passed wrong key');
 				a.areEqual('mia', args.value, 'on store callback passed wrong value');
 			});
 			
@@ -491,7 +493,9 @@ YUI().add('jsds_tests', function(Y) {
 			this.s.on('store', {
 				callback: function(type, args) {
 					called = true;
-					a.areEqual('mama', args.key, 'on store callback passed wrong key');
+					a.isArray(args.keys, 'was not passed keys array to callback');
+    				a.areEqual(1, args.keys.length, 'wrong number of keys sent to callback');
+    				a.areEqual('mama', args.keys[0], 'on store callback passed wrong key');
 					a.areEqual('mia', args.value, 'on store callback passed wrong value');
 					a.areSame(fakeScope, this, 'bad scope');
 				},
@@ -682,7 +686,7 @@ YUI().add('jsds_tests', function(Y) {
 			JSDS.on('store', {
 			    callback: function(type, data) {
 				    callbackCalled++;
-				    if (data.key === 'cityData') {
+				    if (data.keys[0] === 'cityData') {
     				    retrievedCityData = data.value;
 				    } else {
 				        retrievedOtherData = data.value;
@@ -756,7 +760,7 @@ YUI().add('jsds_tests', function(Y) {
 				}
 			});
 			
-			this.s.store('animals', {
+			this.s.store('stuff.animals', {
 				reptiles: {
 					turtles: ['skank']
 				}
@@ -764,7 +768,7 @@ YUI().add('jsds_tests', function(Y) {
 			
 			a.isFalse(dogCallbackCalled, 'callback was called when no dog data was updated');
 			
-			this.s.store('animals', {
+			this.s.store('stuff.animals', {
 				mammals: {
 					dogs: ['Buttons', 'Teela']
 				}
