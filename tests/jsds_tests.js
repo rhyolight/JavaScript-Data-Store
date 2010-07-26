@@ -772,7 +772,7 @@ YUI().add('jsds_tests', function(Y) {
 			var dogCallbackCalled = false;
 			
 			this.s.on('store', {
-				key: 'animals.mammals.primates.dogs',
+				key: 'animals.mammals.dogs',
 				callback: function(type, args) {
 					dogCallbackCalled = true;
 				}
@@ -780,7 +780,7 @@ YUI().add('jsds_tests', function(Y) {
 			
 			this.s.store('stuff.animals', {
 				reptiles: {
-					turtles: ['skank']
+					turtles: ['slowie']
 				}
 			}, {update: true});
 			

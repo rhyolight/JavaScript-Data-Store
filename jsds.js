@@ -43,9 +43,12 @@ JSDS = {
 				if (key.indexOf('\.') >= 0) {
 					keys = key.split('.');
 					oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
-					store[keys[0]] = {};
+					// store[keys[0]] = {};
 					oldKey = keys.shift();
-					return _store(store[oldKey], keys[0], val, oldVal);
+					if (store[oldKey] === undefined) {
+					    store[oldKey] = {};
+					}
+					return _store(store[oldKey], keys.join('.'), val, oldVal);
 				}
 				result = oldVal ? oldVal[key] : store[key];
 				// if this is an update, and there is an old value to update
