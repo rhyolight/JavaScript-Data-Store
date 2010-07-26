@@ -507,6 +507,24 @@ YUI().add('jsds_tests', function(Y) {
 			a.isTrue(called, 'callback for on store event never called');
 		},
 		
+		test_On_Function_WorksWith_DotConnectedKeys: function() {
+		    var called = false;
+		    this.s.on('store', {
+		        key: 'taco.town',
+		        callback: function(type, args) {
+		            called = true;
+		        }
+		    });
+		    
+		    this.s.store('taco.city', 'oops');
+		    
+		    a.isFalse(called, 'callback keyed on wrong string with dots was called');
+		    
+		    this.s.store('taco.town', 'yay');
+		    
+		    a.isTrue(called, 'callback keyed on string with dots was not called');
+		},
+		
 		test_OnGet_CallbackIsCalled: function () {
 			var called = false;
 			this.s.on('get', function() {

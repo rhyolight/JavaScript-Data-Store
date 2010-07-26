@@ -45,7 +45,7 @@ JSDS = {
 					oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
 					store[keys[0]] = {};
 					oldKey = keys.shift();
-					return _store(store[oldKey], keys, val, oldVal);
+					return _store(store[oldKey], keys[0], val, oldVal);
 				}
 				result = oldVal ? oldVal[key] : store[key];
 				// if this is an update, and there is an old value to update
@@ -179,24 +179,33 @@ JSDS = {
 		    return false;
 		}
 		
-		function _fire(type, args) {
-			var i, ltype, localListeners = this._l[type] || [], lname, staticListeners = [], opts, scope, listeners;
-			args = args || {};
-			
-			// gather static listeners
-			for (ltype in JSDS._listeners) {
-		        if (JSDS._listeners.hasOwnProperty(ltype) && type === ltype) {
-		            staticListeners = JSDS._listeners[ltype];
+		function _arrayContainsAny(haystack, needle) {
+		    var i=0;
+		    for (;i<needle.length; i++) {
+		        if (_arrayContains(haystack, needle[i])) {
+		            return true;
 		        }
 		    }
-			
+		    return false;
+		}
+		
+		function _fire(type, args) {
+			var i, opts, scope, listeners,  
+			    localListeners = this._l[type] || [], 
+			    staticListeners = JSDS._listeners[type] || [];
+			    
+			args = args || {};
+		    
 			// mix local listeners
 			listeners = localListeners.concat(staticListeners);
 			
 			if (listeners.length) {
 				for (i=0; i<listeners.length; i++) {
 					opts = listeners[i];
-					if ((!opts.id || opts.id === this.id) && (!opts.key || _arrayContains(args.keys, opts.key))) {
+					if (opts.key && !opts.keys) {
+					    opts.keys = [opts.key];
+					}
+					if ((!opts.id || opts.id === this.id) && (!opts.keys || !opts.keys.length || _arrayContainsAny(args.keys, opts.keys))) {
 		        		scope = opts.scope || this;
 		        		opts.callback.call(scope, type, args);    
 		            }
