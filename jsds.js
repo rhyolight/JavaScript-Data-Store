@@ -68,7 +68,7 @@ JSDS = {
 			// prepend all updatedKeys with the base node name
 			firstKey = key.split('.').length ? key.split('.')[0] : key;
 			for (i=0; i<updatedKeys.length; i++) {
-			    if (updatedKeys[i] !== firstKey) {
+			    if (updatedKeys[i].indexOf(firstKey) !== 0) {
     			    updatedKeys[i] = firstKey + '.' + updatedKeys[i];
 			    }
 			}

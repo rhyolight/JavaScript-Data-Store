@@ -490,7 +490,9 @@ YUI().add('jsds_tests', function(Y) {
 		        callback: function(type, args) {
 		            called = true;
 		            a.isArray(args.keys, 'was not passed keys array to callback');
-    				a.areEqual(1, args.keys.length, 'wrong number of keys sent to callback');
+    				a.areEqual(2, args.keys.length, 'wrong number of keys sent to callback');
+    				aa.contains('taco', args.keys);
+    				aa.contains('taco.town', args.keys);
     				a.areEqual('taco.town', args.keys[0], 'on store callback passed wrong key');
 					a.areEqual('yay', args.value, 'on store callback passed wrong value');
 		        }
