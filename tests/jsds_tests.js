@@ -463,6 +463,21 @@ YUI().add('jsds_tests', function(Y) {
 			a.isTrue(called, 'callback for on store event never called');
 		},
 		
+		test_onStoreEvent_PassesProperNestedValue_NotEntireStore: function() {
+			var called = false;
+			this.s.on('store', {
+			    key: 'one.two.three',
+			    callback: function(type, args) {
+    				called = true;
+    				a.areEqual('the value', args.value, 'on store callback passed wrong value');
+    			}
+			});
+			
+			this.s.store('one', {two:{three:'the value'}}, {update: true});
+			
+			a.isTrue(called, 'callback for on store event never called');
+		},
+		
 		test_On_Function_CanBePassed_Options: function() {
 			var called = false;
 			var fakeScope = {};
@@ -490,9 +505,10 @@ YUI().add('jsds_tests', function(Y) {
 		        callback: function(type, args) {
 		            called = true;
 		            a.isArray(args.keys, 'was not passed keys array to callback');
-    				a.areEqual(1, args.keys.length, 'wrong number of keys sent to callback');
-    				a.areEqual('taco.town', args.keys[0], 'on store callback passed wrong key');
-					a.areEqual('yay', args.value, 'on store callback passed wrong value');
+    				a.areEqual(2, args.keys.length, 'wrong number of keys sent to callback');
+    				aa.contains('taco.town', args.keys, 'on store callback passed wrong key');
+                    aa.contains('taco', args.keys, 'on store callback passed wrong key');
+                    a.areEqual('yay', args.value, 'on store callback passed wrong value');
 		        }
 		    });
 		    
@@ -773,6 +789,31 @@ YUI().add('jsds_tests', function(Y) {
 			}, {update: true});
 			
 			a.isTrue(dogCallbackCalled, 'callback was not called for dog update');
+		},
+		
+		testUpdateWillOverwriteAndCreateNew: function() {
+		    var val = {
+				animals: {
+					reptiles: {
+						turtles: ['Victor']
+					},
+					mammals: {
+						primates: {
+							humans: {
+								Taylors: ['Matt', 'Trinity', 'Dean', 'Romy']
+							}
+						},
+						dogs: ['Sasha', 'Ann-Marie']
+					}
+				}
+			};
+			
+			this.s.store('stuff', val, {update: true});
+			
+			var res = this.s.get('stuff.animals.reptiles');
+			
+			a.areEqual(val.animals.reptiles, res, 'got wrong object back');
+			
 		},
 		
 		testUsingWildcardInKey: function() {

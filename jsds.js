@@ -68,7 +68,7 @@ JSDS = {
 			// prepend all updatedKeys with the base node name
 			firstKey = key.split('.').length ? key.split('.')[0] : key;
 			for (i=0; i<updatedKeys.length; i++) {
-			    if (updatedKeys[i] !== firstKey) {
+			    if (updatedKeys[i].substr(0, firstKey.length) !== firstKey) {
     			    updatedKeys[i] = firstKey + '.' + updatedKeys[i];
 			    }
 			}
@@ -154,7 +154,7 @@ JSDS = {
 		
 		// private methods
 		function _update(store, val, key) {
-		    var i, vprop, updatedKeys = [], tmpKeys, newUKey;
+		    var i, vprop, updatedKeys = [], tmpKeys, newUKey, valProp;
 		    if (typeof val !== 'object' || val instanceof Array) {
     		    store[key] = val;
     		    updatedKeys.push(key);
@@ -162,6 +162,9 @@ JSDS = {
     		    for (vprop in val) {
     		        if (val.hasOwnProperty(vprop)) {
     		            updatedKeys.push(key);
+    		            if (!store[key]) {
+    		                store[key] = {};
+    		            }
     		            if (store[key].hasOwnProperty(vprop)) {
     		                // update existing values
     		                tmpKeys = _update(store[key], val[vprop], vprop);
@@ -175,6 +178,13 @@ JSDS = {
     		                // set non-existing values
     		                store[key][vprop] = val[vprop];
     		                updatedKeys.push(key + '.' + vprop);
+    		                if (typeof val[vprop] === 'object' && !(val[vprop] instanceof Array)) {
+    		                    for (valProp in val[vprop]) {
+    		                        if (val[vprop].hasOwnProperty(valProp)) {
+    		                            updatedKeys.push(key + '.' + vprop + '.' + valProp);
+    		                        }
+    		                    }
+    		                }
     		            }
     		        }
     		    }
@@ -210,7 +220,7 @@ JSDS = {
 		}
 		
 		function _fire(type, args) {
-			var i, opts, scope, listeners,  
+			var i, opts, scope, listeners, returnValue,
 			    localListeners = this._l[type] || [], 
 			    staticListeners = JSDS._listeners[type] || [];
 			    
@@ -227,6 +237,9 @@ JSDS = {
 					}
 					if ((!opts.id || opts.id === this.id) && (!opts.keys || !opts.keys.length || _hasMatchingKey(args.keys, opts.keys))) {
 		        		scope = opts.scope || this;
+		        		if (opts.keys && opts.keys.length) {
+		        		    args.value = _getValue(this._s, opts.keys[0].split('.'));
+	        		    }
 		        		opts.callback.call(scope, type, args);    
 		            }
 				}
