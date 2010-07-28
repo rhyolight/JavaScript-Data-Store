@@ -506,9 +506,16 @@ YUI().add('jsds_tests', function(Y) {
 		            called = true;
 		            a.isArray(args.keys, 'was not passed keys array to callback');
     				a.areEqual(2, args.keys.length, 'wrong number of keys sent to callback');
+<<<<<<< HEAD
     				aa.contains('taco.town', args.keys, 'on store callback passed wrong key');
                     aa.contains('taco', args.keys, 'on store callback passed wrong key');
                     a.areEqual('yay', args.value, 'on store callback passed wrong value');
+=======
+    				aa.contains('taco', args.keys);
+    				aa.contains('taco.town', args.keys);
+    				a.areEqual('taco.town', args.keys[0], 'on store callback passed wrong key');
+					a.areEqual('yay', args.value, 'on store callback passed wrong value');
+>>>>>>> e90d7760b444e744672bbe2971cff3a710140ed9
 		        }
 		    });
 		    
@@ -817,7 +824,7 @@ YUI().add('jsds_tests', function(Y) {
 		},
 		
 		testUsingWildcardInKey: function() {
-            var called = false;
+            var called = 0;
 		    var val = {
 				animals: {
 					frogs: {
@@ -828,21 +835,34 @@ YUI().add('jsds_tests', function(Y) {
 					    number: 24,
 					    area: 'east'
 					}
+				},
+				veggies: {
+				    cucumbers: {
+				        area: 'west'
+				    }
 				}
 			};
 			
 			this.s.store('stuff', val);
 			
 			this.s.on('store', {
-			    key: 'stuff.animals.*.area', 
+			    key: 'stuff.*.*.area', 
 			    callback: function(type, args) {
-			        called = true;
+			        called++;
 			    }
 			});
 			
 			this.s.store('stuff.animals.frogs.area', 'south');
 			
-			a.isTrue(called, 'callback not called');
+			a.areEqual(1, called, 'callback not called');
+			
+			this.s.store('stuff.veggies.squash.area', 'east');
+			
+			a.areEqual(2, called, 'callback not called');
+			
+			this.s.store('stuff.veggies.squash.number', 444);
+			
+			a.areEqual(2, called, 'callback not called');
 		}
 		
 	}));
