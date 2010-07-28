@@ -506,16 +506,9 @@ YUI().add('jsds_tests', function(Y) {
 		            called = true;
 		            a.isArray(args.keys, 'was not passed keys array to callback');
     				a.areEqual(2, args.keys.length, 'wrong number of keys sent to callback');
-<<<<<<< HEAD
-    				aa.contains('taco.town', args.keys, 'on store callback passed wrong key');
                     aa.contains('taco', args.keys, 'on store callback passed wrong key');
+    				aa.contains('taco.town', args.keys, 'on store callback passed wrong key');
                     a.areEqual('yay', args.value, 'on store callback passed wrong value');
-=======
-    				aa.contains('taco', args.keys);
-    				aa.contains('taco.town', args.keys);
-    				a.areEqual('taco.town', args.keys[0], 'on store callback passed wrong key');
-					a.areEqual('yay', args.value, 'on store callback passed wrong value');
->>>>>>> e90d7760b444e744672bbe2971cff3a710140ed9
 		        }
 		    });
 		    
