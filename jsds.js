@@ -210,7 +210,8 @@ JSDS = {
 			_fire.call(this, 'remove');
 		};
 		
-		// private methods
+		// recursive update function used to overwrite values within the store without 
+		// clobbering properties of objects
 		function _update(store, val, key) {
 		    var i, vprop, updatedKeys = [], tmpKeys, newUKey, valProp;
 		    if (typeof val !== 'object' || val instanceof Array) {
@@ -250,6 +251,7 @@ JSDS = {
 		    return updatedKeys
 		}
 		
+		// internal utility function
 		function _arrayContains(arr, val, comparator /* optional */) {
 		    var i=0;
 		    comparator = comparator || function(lhs, rhs) {
@@ -263,6 +265,8 @@ JSDS = {
 		    return false;
 		}
 		
+		// compares two arrays of keys together, returning true if haystack contains a value 
+		// that needle also contains
 		function _hasMatchingKey(haystack, needle) {
 		    var i=0, match;
 		    for (;i<needle.length; i++) {
@@ -277,6 +281,7 @@ JSDS = {
 		    return false;
 		}
 		
+		// fire an event of 'type' with included arguments to be passed to listeners functions
 		function _fire(type, args) {
 			var i, opts, scope, listeners, returnValue,
 			    localListeners = this._l[type] || [], 
@@ -304,6 +309,7 @@ JSDS = {
 			}
 		}
 		
+		// used to copy branches within the store. Object and array friendly
 		function _clone(val) {
 			var newObj, i, prop;
 			if (val instanceof Array) {
@@ -324,6 +330,8 @@ JSDS = {
 			return newObj;
 		}
 		
+		// returns a value from a store given an array of keys that is mean to describe depth
+		// within the storage tree
 		function _getValue(store, keys) {
 			var key = keys.shift(), endKey;
 			if (store[key][keys[0]]) {
