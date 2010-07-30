@@ -839,7 +839,7 @@ YUI().add('jsds_tests', function(Y) {
 			this.s.store('stuff', val);
 			
 			this.s.on('store', {
-			    key: 'stuff.*.*.area', 
+			    key: 'stuff.*.area', 
 			    callback: function(type, args) {
 			        called++;
 			    }

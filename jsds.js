@@ -3,6 +3,12 @@ JSDS = {
 	_stores: {},
 	_listeners: {},
 	
+	/**
+	 * Create a new data store object. If no id is specified, a random id will be 
+	 * generated.
+	 *
+	 * id {String} (optional): to identify this store for events and later retrieval 
+	 */
 	create: function(id) {
 		
 		var jsds = this;
@@ -32,18 +38,30 @@ JSDS = {
 			this.id = id;
 		}
 		
-		// public methods
+		/**
+		 * Stores data
+		 *
+		 * key {String}: the key to be used to store the data. The same key can be used to retrieve
+		 *               the data
+		 * val {Object}: Any value to be stored in the store
+		 * opts {Object} (optional): options to be used when storing data:
+		 *                          'update': if true, values already existing within objects and
+		 *                                    arrays will not be clobbered
+		 * returns {Object}: The last value stored within specified key or undefined
+		 *
+		 * (fires 'store' event)
+		 */
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
 			var i, firstKey, result, updatedKeys = [key];
 			
 			opts = opts || { update: false };
 			
+			// internal recursive store function
 			function _store(store, key, val, oldVal /*optional*/) {
 				var result, keys, prevKey, currStore, oldKey, oldVal;
 				if (key.indexOf('\.') >= 0) {
 					keys = key.split('.');
 					oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
-					// store[keys[0]] = {};
 					oldKey = keys.shift();
 					updatedKeys.push(oldKey);
 					if (store[oldKey] === undefined) {
@@ -77,6 +95,14 @@ JSDS = {
 			return result;
 		};
 		
+		/**
+		 * Gets data back out of store
+		 *
+		 * key {String}: the key of the data you want back
+		 * returns {Object}: the data or undefined if key doesn't exist
+		 *
+		 * (fires 'get' event)
+		 */
 		JSDataStore.prototype.get = function(key) {
 			var s = this._s, keys, i=0, j=0, v, result;
 			
@@ -105,7 +131,27 @@ JSDS = {
 			_fire.call(this, 'get', {keys:[key], value:result});
 			return result;
 		};
-		
+		/**
+		 * Adds a listener to this store. The listener will be executed when an event of 
+		 * the specified type is emitted and all the conditions defined in the parameters
+		 * are met.
+		 *
+		 * There are 2 options for how parameters are passed into this function:
+		 * 
+		 * OPTION 1
+		 * type {String}: the type of event to listen for ('store', 'get', 'clear', etc.)
+		 * fn {function}: function to be executed on event
+		 * scope {object}: object to use as the scope of the callback
+		 * 
+		 * OPTION 2
+		 * type {String}: the type of event to listen for ('store', 'get', 'clear', etc.)
+ 		 * options {object}: an object that contains one or more of the following configurations:
+ 		 *                  'callback': the function to be executed
+ 		 *                  'scope': the scope object for the callback execution
+ 		 *                  'key': the storage key to listen for. If specified only stores into this key will
+ 		 *                          cause callback to be executed
+ 		 *                  'keys': list of keys that will cause callback to be executed (overrides 'key' option)
+		 */
 		JSDataStore.prototype.on = function() {
 			var type = arguments[0], fn, scope, pname, keys;
 			if (typeof arguments[1] === 'object') {
@@ -129,11 +175,23 @@ JSDS = {
 			this._l[type].push({callback:fn, scope:scope, keys: keys});
 		};
 		
+		/**
+		 * Removes all data from store
+		 *
+		 * (fires 'clear' event)
+		 */
 		JSDataStore.prototype.clear = function() {
 			this._s = {};
 			_fire.call(this, 'clear');
 		};
 		
+		/**
+		 * Removes all internal references to this data store. Note that to entirely release
+		 * store object for garbage collection, you must also set any local references to the
+		 * store to null!
+		 *
+		 * (fires 'remove' and 'clear' events)
+		 */
 		JSDataStore.prototype.remove = function() {
 		    var ltype, optsArray, opts, i;
 			this.clear();
@@ -288,10 +346,20 @@ JSDS = {
 		return this._stores[id];
 	},
 	
+	/**
+	 * Retrieves an existing data store object by id
+	 *
+	 * id {String}: the id of the store to retrieve
+	 * returns {JSDataStore} the data store
+	 */
 	get: function(id) {
 		return this._stores[id];
 	},
 	
+	/**
+	 * Removes all data stores objects. Specifically, each JSDataStore object's remove()
+	 * method is called, and all local references to each are deleted.
+	 */
 	clear: function() {
 		var storeId;
 		for (storeId in this._stores) {
@@ -303,6 +371,9 @@ JSDS = {
 		this._stores = {};
 	},
 	
+	/**
+	 * Returns a count of the existing data stores in memory
+	 */
 	count: function() {
 		var cnt = 0, p;
 		for (p in this._stores) {
@@ -313,6 +384,9 @@ JSDS = {
 		return cnt;
 	},
 	
+	/**
+	 * Returns a list of ids [String] for all data store obects in memory
+	 */
 	ids: function() {
 	    var id, ids = [];
 	    for (id in this._stores) {
@@ -323,6 +397,20 @@ JSDS = {
 	    return ids;
 	},
 	
+	/**
+	 * Used to add listeners to potentially any data store objects at once through
+	 * a static interface. This listener will be executed whenever an event of the 
+	 * specified type is emitted that also matches the conditions in the options
+	 * parameter.
+	 *
+	 * type {String}: the type of event to listen to
+	 * options {object}: an object that contains one or more of the following configurations:
+	 *                  'callback': the function to be executed
+	 *                  'scope': the scope object for the callback execution
+	 *                  'key': the storage key to listen for. If specified only stores into this key will
+	 *                          cause callback to be executed
+	 *                  'keys': list of keys that will cause callback to be executed (overrides 'key' option)
+	 */
 	on: function(type, o) {
 	    if (!this._listeners[type]) {
 			this._listeners[type] = [];
