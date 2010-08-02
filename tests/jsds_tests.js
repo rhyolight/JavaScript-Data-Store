@@ -208,8 +208,50 @@ YUI().add('jsds_tests', function(Y) {
 			
 			result = this.s.get('stuff.animals.mammals.dogs');
 			a.isArray(result, 'result should have been array');
-			a.areEqual(1, result.length, 'array should have been 1');
-			a.areEqual('Scooby', result[0], 'Wrong dog name on update');
+			a.areEqual(3, result.length, 'array should have 3 dogs');
+			aa.contains('Scooby', result);
+			aa.contains('Sasha', result);
+			aa.contains('Ann-Marie', result);
+		},
+		
+		testUpdatingArrays_DoesntClobberExistingValues: function() {
+		    this.s.store('arr', ['one','two','three']);
+		    
+		    this.s.store('arr', ['red'], {update: true});
+		    
+		    var res = this.s.get('arr');
+		    
+		    a.isArray(res, 'result was not array');
+		    aa.contains('one', res);
+		    aa.contains('two', res);
+		    aa.contains('three', res);
+		},
+
+		testUpdatingArrays_AddsNewValuesToEndOfArray: function() {
+		    this.s.store('arr', ['one','two','three']);
+		    
+		    this.s.store('arr', ['red'], {update: true});
+		    
+		    var res = this.s.get('arr');
+		    
+		    a.isArray(res, 'result was not array');
+		    a.areEqual(4, res.length);
+		    aa.contains('red', res);
+		},
+
+		testUpdatingArrays_DoesntDuplicateArrayValues: function() {
+		    this.s.store('arr', ['one','two','three']);
+		    
+		    this.s.store('arr', ['red', 'two'], {update: true});
+		    
+		    var res = this.s.get('arr');
+		    
+		    a.isArray(res, 'result was not array');
+		    a.areEqual(4, res.length);
+		    aa.contains('red', res);
+		    aa.contains('one', res);
+		    aa.contains('two', res);
+		    aa.contains('three', res);
 		},
 
         testStoreReturnsPreviousValue: function() {

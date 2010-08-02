@@ -215,7 +215,11 @@ JSDS = {
 		function _update(store, val, key) {
 		    var i, vprop, updatedKeys = [], tmpKeys, newUKey, valProp;
 		    if (typeof val !== 'object' || val instanceof Array) {
-    		    store[key] = val;
+		        if (store[key] && val instanceof Array) {
+		            store[key] = store[key].concat(val);
+		        } else {
+    		        store[key] = val;
+		        }
     		    updatedKeys.push(key);
 		    } else {
     		    for (vprop in val) {
