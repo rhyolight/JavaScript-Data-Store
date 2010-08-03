@@ -41,16 +41,19 @@ YUI().add('jsds_tests', function(Y) {
             start = timer();
             
             for (i=0; i<ids.length; i++) {
-                j.store(ids[i], vals[i]);
+                var v = {values: vals[i], someArray: ['one', 'two', 'three']};
+                j.store(ids[i], v, {update: true});
             }
             
             for (i=0; i<ids.length; i++) {
                 j.get(ids[i]);
+                j.store(ids[i], randomId(), {update: true});
             }
             
             end = timer();
             
             var timeForOne = (end - start)/cnt;
+            console.log(timeForOne);
             
             a.isTrue(timeForOne < 0.5, 'Over ' + cnt + ' times, each count was ' + timeForOne + 'ms, which is higher than the 0.5ms threshhold!');
         }

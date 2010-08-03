@@ -216,7 +216,7 @@ JSDS = {
 		    var i, vprop, updatedKeys = [], tmpKeys, newUKey, valProp;
 		    if (typeof val !== 'object' || val instanceof Array) {
 		        if (store[key] && val instanceof Array) {
-		            store[key] = store[key].concat(val);
+		            _mergeArraysIntoSet(store[key], val);
 		        } else {
     		        store[key] = val;
 		        }
@@ -229,30 +229,49 @@ JSDS = {
     		                store[key] = {};
     		            }
     		            if (store[key].hasOwnProperty(vprop)) {
-    		                // update existing values
-    		                tmpKeys = _update(store[key], val[vprop], vprop);
-    		                for (i=0; i<tmpKeys.length; i++) {
-    		                    newUKey = key + '.' + tmpKeys[i];
-    		                    if (!_arrayContains(updatedKeys, newUKey)) {
-    		                        updatedKeys.push(newUKey);
-		                        }
-    		                }
+                            updatedKeys = _updateExistingValues(store, key, val, vprop, updatedKeys);
     		            } else {
-    		                // set non-existing values
-    		                store[key][vprop] = val[vprop];
-    		                updatedKeys.push(key + '.' + vprop);
-    		                if (typeof val[vprop] === 'object' && !(val[vprop] instanceof Array)) {
-    		                    for (valProp in val[vprop]) {
-    		                        if (val[vprop].hasOwnProperty(valProp)) {
-    		                            updatedKeys.push(key + '.' + vprop + '.' + valProp);
-    		                        }
-    		                    }
-    		                }
+    		                updatedKeys = _setNonExistingValues(store, key, val, vprop, updatedKeys);
     		            }
     		        }
     		    }
 		    }
 		    return updatedKeys
+		}
+		
+		function _setNonExistingValues(store, key, val, vprop, updatedKeys) {
+		    store[key][vprop] = val[vprop];
+            updatedKeys.push(key + '.' + vprop);
+            if (typeof val[vprop] === 'object' && !(val[vprop] instanceof Array)) {
+                for (valProp in val[vprop]) {
+                    if (val[vprop].hasOwnProperty(valProp)) {
+                        updatedKeys.push(key + '.' + vprop + '.' + valProp);
+                    }
+                }
+            }
+            return updatedKeys;
+		}
+		
+		function _updateExistingValues(store, key, val, vprop, updatedKeys) {
+		    var tmpKeys = _update(store[key], val[vprop], vprop),
+		        newUKey, i=0;
+            for (; i<tmpKeys.length; i++) {
+                newUKey = key + '.' + tmpKeys[i];
+                if (!_arrayContains(updatedKeys, newUKey)) {
+                    updatedKeys.push(newUKey);
+                }
+            }
+            return updatedKeys;
+		}
+		
+		// merge two arrays without duplicate values
+		function _mergeArraysIntoSet(lhs, rhs) {
+		    var i=0;
+		    for (; i<rhs.length; i++) {
+		        if (!_arrayContains(lhs, rhs[i])) {
+		            lhs.push(rhs[i]);
+		        }
+		    }
 		}
 		
 		// internal utility function
