@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>plugindemo</title>
+	<meta name="generator" content="TextMate http://macromates.com/">
+	<meta name="author" content="rhyolight">
+	<!-- Date: 2010-08-02 -->
+</head>
+<body>
+
+<script src="http://ajax.microsoft.com/ajax/jquery/jquery-1.4.2.js"></script>
+<script src="../jsds.js"></script>
+<script src="jquery.jsds.js"></script>
+
+<input value="reptiles"/>
+<button>go</button>
+
+<div id='result'></div>
+
+<script>
+    $(function() {
+        
+        $('button').click(function() {
+            $.ajax({
+                url: '/json.php',
+                jsds: {
+                    id: 'parrots'
+                }
+            });
+        });
+        
+        $.jsds.on('store', {
+            id:'parrots', 
+            callback: function(type, args) {
+                alert(args);
+            }, 
+            key: 'defaultKey.animals'
+        });
+        
+    });
+</script>
+
+</body>
+</html>
