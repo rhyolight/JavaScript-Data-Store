@@ -22,7 +22,14 @@
     jQuery.jsds = {
         on: function (type, opts) {
             JSDS.on('defaultKey.' + type, opts);
-        }
+        },
+		// ugly testing backdoors
+		__stealAjax: function() {
+			return ajax;
+		},
+		__replaceAjax: function(ajx) {
+			ajax = ajx;
+		}
     };
     
 })();

@@ -1,0 +1,84 @@
+ 
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"> 
+<html> 
+<head> 
+<meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+<title>JSDS jQuery Tests</title> 
+ 
+<style type="text/css"> 
+/*margin and padding on body element
+  can introduce errors in determining
+  element position and are not recommended;
+  we turn them off as a foundation for YUI
+  CSS treatments. */
+body {
+	margin:0;
+	padding:0;
+}
+</style> 
+
+<!--begin custom header content for this example--> 
+<style type="text/css"> 
+#testLogger {
+    margin-bottom: 1em;
+}
+ 
+#testLogger .yui3-console .yui3-console-title {
+    border: 0 none;
+    color: #000;
+    font-size: 13px;
+    font-weight: bold;
+    margin: 0;
+    text-transform: none;
+}
+#testLogger .yui3-console .yui3-console-entry-meta {
+    margin: 0;
+}
+ 
+.yui3-skin-sam .yui3-console-entry-pass .yui3-console-entry-cat {
+    background: #070;
+    color: #fff;
+}
+</style> 
+ 
+<!--end custom header content for this example--> 
+ 
+</head> 
+ 
+<body class="yui3-skin-sam  yui-skin-sam"> 
+ 
+<div id="testLogger"></div> 
+
+
+
+<!-- online -->
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script> 
+<link type="text/css" rel="stylesheet" href="http://yui.yahooapis.com/combo?3.1.1/build/cssfonts/fonts-min.css" /> 
+<script type="text/javascript" src="http://yui.yahooapis.com/combo?3.1.1/build/yui/yui-min.js"></script>
+
+<!-- offline 
+<link type="text/css" rel="stylesheet" href="/Users/mtaylor/dev/javascript/yui/yui3/build/cssfonts/fonts-min.css" /> 
+<script type="text/javascript" src="/Users/mtaylor/dev/javascript/yui/yui3/build/yui/yui-min.js"></script> 
+-->
+
+<script src="../jquery.jsds.js"></script>
+<script src="jquery_plugin_tests.js"></script>
+
+<script type="text/javascript"> 
+YUI().use("console", "test", "jquery_plugin_tests", function (Y) {
+	//create the console
+    var r = new Y.Console({
+        newestOnTop : false,
+		width: "500px",
+        style: 'block' // to anchor in the example content
+    });
+    
+    r.render('#testLogger');
+ 
+    //run the tests
+    Y.Test.Runner.run();
+});
+</script> 
+ 
+</body> 
+</html> 
