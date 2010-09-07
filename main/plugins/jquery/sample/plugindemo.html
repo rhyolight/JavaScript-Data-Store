@@ -12,19 +12,19 @@
 	    .jsds-report {
 	        font-family: monospace;
 	        width: 500px;
-/*          border: solid black 1px;*/
 	    }
 	    .jsds-node {
-/*          border: solid 1px red;*/
 	        padding: 2px 0px 2px 20px;
 	    }
 	    .jsds-content {
-/*          border: solid 1px purple;*/
 	    }
 	    .jsds-node-header {
 	        text-transform: uppercase;
 	        font-weight: bold;
-/*          border: solid 1px blue;*/
+	    }
+	    #mutator {
+	        display: none;
+	        margin: 20px;
 	    }
 	</style>
 </head>
@@ -35,7 +35,13 @@
 <script src="../jsds-viewer.js"></script>
 
 <label for="zip">ZIP CODE</label><input id="zip" value="95014"/>
-<button>GET WEATHER</button>
+<button id="getweather">GET WEATHER</button><button id="clear">Clear</button>
+
+<div id="mutator">
+    <input id="key" value="95014.description"/>
+    <input id="newKeyVal" value=""/>
+    <button id="updateweather">update</button>
+</div>
 
 <div id='jsdsViewer'></div>
 
@@ -47,8 +53,8 @@
         var weatherQuery = "select * from weather.forecast where location=XXXXXX";
         var fullQueryUrl = queryUrl + "?q=" + encodeURIComponent(weatherQuery) + queryParams;
         
-        $('button').click(function() {
-            var zip = $('input').val();
+        $('#getweather').click(function() {
+            var zip = $('#zip').val();
             $.ajax({
                 url: fullQueryUrl.replace('XXXXXX', zip),
                 jsds: {
@@ -58,10 +64,29 @@
                 }
             });
         });
+        $('#clear').click(function() {
+            var store = JSDS.get('weather');
+            if (store) {
+                store.clear();
+            }
+        });
+        
+        $('#updateweather').click(function() {
+            var key = $('#key').val(),
+                val = $('#newKeyVal').val();
+            JSDS.get('weather').store(key, val, {update: true});
+        });
         
         $.jsds.on('store', {
             callback: function(type, args) {
                 JSDS.render('jsdsViewer', 'weather');
+                $('#mutator').show();
+            }
+        });
+        $.jsds.on('clear', {
+            callback: function(type, args) {
+                JSDS.render('jsdsViewer', 'weather');
+                $('#mutator').hide();
             }
         });
         

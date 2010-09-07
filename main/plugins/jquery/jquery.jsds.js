@@ -173,6 +173,7 @@ JSDS = {
 			}
 			scope = scope || this;
 			this._l[type].push({callback:fn, scope:scope, keys: keys});
+			return this; // allow chaining
 		};
 		
 		/**
