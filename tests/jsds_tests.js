@@ -898,6 +898,50 @@ YUI().add('jsds_tests', function(Y) {
 			this.s.store('stuff.veggies.squash.number', 444);
 			
 			a.areEqual(2, called, 'callback not called');
+		},
+		
+		testUsingWildcard_AsFirstThing_InKey: function() {
+            var called = 0,
+				val = {
+					animals: {
+						frogs: {
+						    number: 11,
+						    area: 'north'
+						},
+						lizards: {
+						    number: 24,
+						    area: 'east'
+						}
+					},
+					veggies: {
+					    cucumbers: {
+					        area: 'west'
+					    }
+					}
+				},
+				otherval = {animals:{frogs:{area:30}}};
+			
+			this.s.store('stuff', val);
+			this.s.store('otherstuff', otherval);
+			
+			this.s.on('store', {
+			    key: '*.animals.frogs.area', 
+			    callback: function(type, args) {
+			        called++;
+					a.isObject(args);
+					a.areEqual('south', args.value[0], 'cb for mutli-matching wildcard sent wrong array values');
+					a.areEqual(30, args.value[1], 'cb for mutli-matching wildcard sent wrong array values');
+					a.fail('need to evaluate keys as well');
+				}
+			});
+			
+			this.s.store('stuff.animals.frogs.area', 'south');
+			
+			a.areEqual(1, called, 'callback not called');
+			
+			this.s.store('stuff.veggies.squash.area', 'east');
+			
+			a.areEqual(1, called, 'callback should not have been called');
 		}
 		
 	}));

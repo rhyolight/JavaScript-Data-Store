@@ -296,6 +296,10 @@ JSDS = {
 		    for (;i<needle.length; i++) {
 		        match = _arrayContains(haystack, needle[i], function(lhs, rhs) {
 		            console.log ('Matching ' + lhs + ' and ' + rhs);
+					// if the wildcard is the first thing, change to .*
+					if (rhs.indexOf('*') === 0) {
+						rhs = '.' + rhs;
+					}
 		            return lhs.search(rhs) > -1;
 		        });
 		        if (match) {
@@ -354,10 +358,22 @@ JSDS = {
 			return newObj;
 		}
 		
-		// returns a value from a store given an array of keys that is mean to describe depth
+		// returns a value from a store given an array of keys that is meant to describe depth
 		// within the storage tree
 		function _getValue(store, keys) {
-			var key = keys.shift(), endKey;
+			var key = keys.shift(), endKey, arrResult, p,
+				keysClone;
+			if (key === '*') {
+				arrResult = [];
+				
+				for (p in store) {
+					if (store.hasOwnProperty(p)) {
+						keysClone = _clone(keys);
+						arrResult.push(_getValue(store[p], keysClone));
+					}
+				}
+				return arrResult;
+			}
 			if (store[key][keys[0]]) {
 				return _getValue(store[key], keys);
 			} else {

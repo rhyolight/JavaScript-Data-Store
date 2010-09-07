@@ -23,7 +23,6 @@
 	        font-weight: bold;
 	    }
 	    #mutator {
-	        display: none;
 	        margin: 20px;
 	    }
 	</style>
@@ -47,20 +46,31 @@
 
 <script>
     $(function() {
-        var queryUrl = "http://query.yahooapis.com/v1/public/yql";
+        var yqlUrl = "http://query.yahooapis.com/v1/public/yql";
         var queryParams = "&format=json";
         
         var weatherQuery = "select * from weather.forecast where location=XXXXXX";
-        var fullQueryUrl = queryUrl + "?q=" + encodeURIComponent(weatherQuery) + queryParams;
+        var fullWeatherQueryUrl = yqlUrl + "?q=" + encodeURIComponent(weatherQuery) + queryParams;
+        
+        var mapQuery = "select * from maps.map where zip=XXXXXX";
+        var fullMapQueryUrl = yqlUrl + "?q=" + encodeURIComponent(mapQuery) + queryParams;
         
         $('#getweather').click(function() {
             var zip = $('#zip').val();
             $.ajax({
-                url: fullQueryUrl.replace('XXXXXX', zip),
+                url: fullWeatherQueryUrl.replace('XXXXXX', zip),
                 jsds: {
                     id: 'weather',
                     target: 'query.results.channel',
                     key: zip
+                }
+            });
+            $.ajax({
+                url: fullMapQueryUrl.replace('XXXXXX', zip),
+                jsds: {
+                    id: 'weather',
+                    target: 'query.results.Result',
+                    key: zip + '.map'
                 }
             });
         });
@@ -80,14 +90,18 @@
         $.jsds.on('store', {
             callback: function(type, args) {
                 JSDS.render('jsdsViewer', 'weather');
-                $('#mutator').show();
             }
         });
         $.jsds.on('clear', {
             callback: function(type, args) {
                 JSDS.render('jsdsViewer', 'weather');
-                $('#mutator').hide();
             }
+        });
+        $.jsds.on('store', {
+            callback: function(type, args) {
+                $('body').append('<img src="' + args.value + '">');
+            },
+            key: '63333.map.content'
         });
         
     });
