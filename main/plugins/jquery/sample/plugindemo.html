@@ -1,0 +1,72 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>plugindemo</title>
+	<meta name="generator" content="TextMate http://macromates.com/">
+	<meta name="author" content="rhyolight">
+	<!-- Date: 2010-08-02 -->
+	<style>
+	    .jsds-report {
+	        font-family: monospace;
+	        width: 500px;
+/*          border: solid black 1px;*/
+	    }
+	    .jsds-node {
+/*          border: solid 1px red;*/
+	        padding: 2px 0px 2px 20px;
+	    }
+	    .jsds-content {
+/*          border: solid 1px purple;*/
+	    }
+	    .jsds-node-header {
+	        text-transform: uppercase;
+	        font-weight: bold;
+/*          border: solid 1px blue;*/
+	    }
+	</style>
+</head>
+<body>
+
+<script src="http://ajax.microsoft.com/ajax/jquery/jquery-1.4.2.js"></script>
+<script src="../jquery.jsds.js"></script>
+<script src="../jsds-viewer.js"></script>
+
+<label for="zip">ZIP CODE</label><input id="zip" value="95014"/>
+<button>GET WEATHER</button>
+
+<div id='jsdsViewer'></div>
+
+<script>
+    $(function() {
+        var queryUrl = "http://query.yahooapis.com/v1/public/yql";
+        var queryParams = "&format=json";
+        
+        var weatherQuery = "select * from weather.forecast where location=XXXXXX";
+        var fullQueryUrl = queryUrl + "?q=" + encodeURIComponent(weatherQuery) + queryParams;
+        
+        $('button').click(function() {
+            var zip = $('input').val();
+            $.ajax({
+                url: fullQueryUrl.replace('XXXXXX', zip),
+                jsds: {
+                    id: 'weather',
+                    target: 'query.results.channel',
+                    key: zip
+                }
+            });
+        });
+        
+        $.jsds.on('store', {
+            callback: function(type, args) {
+                JSDS.render('jsdsViewer', 'weather');
+            }
+        });
+        
+    });
+</script>
+
+</body>
+</html>
