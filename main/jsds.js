@@ -79,7 +79,7 @@ JSDS = {
 			
 			// internal recursive store function
 			function _store(store, key, val, oldVal /*optional*/) {
-				var result, keys, prevKey, currStore, oldKey, oldVal;
+				var result, keys, oldKey;
 				if (key.indexOf('\.') >= 0) {
 					keys = key.split('.');
 					oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
