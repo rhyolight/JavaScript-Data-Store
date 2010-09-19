@@ -1,5 +1,5 @@
 JSDS = {
-	
+	_currentValue: null,
 	_stores: {},
 	_listeners: {},
 	
@@ -53,7 +53,6 @@ JSDS = {
 		 */
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
 			var i, firstKey, result, updatedKeys = [key];
-			
 			opts = opts || { update: false };
 			
 			// internal recursive store function
@@ -77,6 +76,7 @@ JSDS = {
 				// if not an update, just overwrite old value
 				else {
     				store[key] = val;
+    				_currentValue = val;
 				}
 				return result;
 			}
@@ -84,14 +84,14 @@ JSDS = {
 			result = _store(this._s, key, val);
 			
 			// prepend all updatedKeys with the base node name
-			firstKey = key.split('.').length ? key.split('.')[0] : key;
-			for (i=0; i<updatedKeys.length; i++) {
-			    if (updatedKeys[i].indexOf(firstKey) !== 0) {
-    			    updatedKeys[i] = firstKey + '.' + updatedKeys[i];
-			    }
-			}
+			// firstKey = key.split('.').length ? key.split('.')[0] : key;
+			// for (i=0; i<updatedKeys.length; i++) {
+			//     if (updatedKeys[i].indexOf(firstKey) !== 0) {
+			//     			    updatedKeys[i] = firstKey + '.' + updatedKeys[i];
+			//     }
+			// }
 			
-			_fire.call(this, 'store', {keys: updatedKeys, value: val, id: this.id});
+			_fire.call(this, 'store', {key: key, value: val, id: this.id});
 			return result;
 		};
 		
@@ -150,19 +150,14 @@ JSDS = {
  		 *                  'scope': the scope object for the callback execution
  		 *                  'key': the storage key to listen for. If specified only stores into this key will
  		 *                          cause callback to be executed
- 		 *                  'keys': list of keys that will cause callback to be executed (overrides 'key' option)
 		 */
 		JSDataStore.prototype.on = function() {
-			var type = arguments[0], fn, scope, pname, keys;
+			var type = arguments[0], fn, scope, pname, key;
 			if (typeof arguments[1] === 'object') {
 				fn = arguments[1].callback;
 				scope = arguments[1].scope;
-				if (arguments[1].keys) {
-					keys = arguments[1].keys;
-				} else if (arguments[1].key) {
-					keys = [arguments[1].key];
-				} else {
-					keys = [];
+				if (arguments[1].key) {
+					key = arguments[1].key;
 				}
 			} else {
 				fn = arguments[1];
@@ -172,7 +167,7 @@ JSDS = {
 				this._l[type] = [];
 			}
 			scope = scope || this;
-			this._l[type].push({callback:fn, scope:scope, keys: keys});
+			this._l[type].push({callback:fn, scope:scope, key: key});
 			return this; // allow chaining
 		};
 		
@@ -220,6 +215,7 @@ JSDS = {
 		            _mergeArraysIntoSet(store[key], val);
 		        } else {
     		        store[key] = val;
+    		        _currentValue = val;
 		        }
     		    updatedKeys.push(key);
 		    } else {
@@ -237,11 +233,12 @@ JSDS = {
     		        }
     		    }
 		    }
-		    return updatedKeys
+		    return updatedKeys;
 		}
 		
 		function _setNonExistingValues(store, key, val, vprop, updatedKeys) {
 		    store[key][vprop] = val[vprop];
+		    _currentValue = val[vprop];
             updatedKeys.push(key + '.' + vprop);
             if (typeof val[vprop] === 'object' && !(val[vprop] instanceof Array)) {
                 for (valProp in val[vprop]) {
@@ -323,18 +320,67 @@ JSDS = {
 			if (listeners.length) {
 				for (i=0; i<listeners.length; i++) {
 					opts = listeners[i];
-					if (opts.key && !opts.keys) {
-					    opts.keys = [opts.key];
-					}
-					if ((!opts.id || opts.id === this.id) && (!opts.keys || !opts.keys.length || _hasMatchingKey(args.keys, opts.keys))) {
+					if (_listenerApplies(opts, args)) {
 		        		scope = opts.scope || this;
-		        		if (opts.keys && opts.keys.length) {
-		        		    args.value = _getValue(this._s, opts.keys[0].split('.'));
+		        		if (opts.key) {
+		        		    args.value = _getValue(this._s, opts.key.split('.'));
+//		        			args.value = _currentValue;
 	        		    }
 		        		opts.callback.call(scope, type, args);    
 		            }
 				}
 			}
+		}
+		
+		function _listenerApplies(listener, crit) {
+			var result = false, last, lastDot, sub, k, breakout = false;
+			if (!listener.key) {
+				return true; 
+			}
+			if (!listener.id || listener.id === this.id) {
+				if (crit.key.match(listener.key)) {
+					return true;
+				}				
+				last = crit.key.length;
+				while (!breakout) {
+					sub = crit.key.substr(0, last);
+					last = sub.lastIndexOf('\.');
+					if (last < 0) {  
+						k = sub;
+						breakout = true;
+					} else {
+						k = sub.substr(0, last);
+					}
+					if (listener.key.match(k)) {
+						return true;
+					}
+
+//					if (_arrayContains(listener.key.split('.'), k)) {
+//						result = true; 
+//						break;
+//					}
+				}
+				
+//				if (crit.key.match(listener.key)) {
+//					return true;
+//				}
+//				last = crit.key.length;
+//				while (!breakout) {
+//					sub = crit.key.substr(0, last);
+//					last = sub.lastIndexOf('\.');
+//					if (last < 0) {  
+//						k = sub;
+//						breakout = true;
+//					} else {
+//						k = sub.substr(0, last);
+//					}
+//					if (_arrayContains(listener.key.split('.'), k)) {
+//						result = true; 
+//						break;
+//					}
+//				}
+			}
+			return result;
 		}
 		
 		// used to copy branches within the store. Object and array friendly
@@ -374,7 +420,7 @@ JSDS = {
 				}
 				return arrResult;
 			}
-			if (store[key][keys[0]]) {
+			if (keys[0] && (store[key][keys[0]] || keys[0] === '*')) {
 				return _getValue(store[key], keys);
 			} else {
 			    if (keys.length) {
