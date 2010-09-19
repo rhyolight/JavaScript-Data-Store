@@ -25,13 +25,6 @@
 	    #mutator {
 	        margin: 20px;
 	    }
-		#map {
-			position: absolute;
-			top:0px; right: 0px;
-		}
-		#map img {
-			width: 400px; height: 400px;
-		}
 	</style>
 </head>
 <body>
@@ -50,8 +43,6 @@
 </div>
 
 <div id='jsdsViewer'></div>
-
-<div id='map'></div>
 
 <script>
     $(function() {
@@ -108,15 +99,9 @@
         });
         $.jsds.on('store', {
             callback: function(type, args) {
-				var i=0, 
-					maps = args.value instanceof Array ? args.value : [args.value],
-					$map = $('#map');
-				$map.html('');
-				for (; i < maps.length; i++) {
-					$map.append('<img src="' + maps[i] + '"><br/>');
-				}
+                $('body').append('<img src="' + args.value + '">');
             },
-            key: '*.map.content'
+            key: '63333.map.content'
         });
         
     });

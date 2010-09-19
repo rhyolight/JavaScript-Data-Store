@@ -317,7 +317,7 @@ JSDS = {
 				return true; 
 			}
 			if (!listener.id || listener.id === this.id) {
-				if (!crit.key || crit.key.match(listener.key)) {
+				if (!crit.key || crit.key.match(_toRegex(listener.key))) {
 					return true;
 				}				
 				last = crit.key.length;
@@ -330,20 +330,25 @@ JSDS = {
 					} else {
 						k = sub.substr(0, last);
 					}
-					if (listener.key.match(k)) {
-						baseStore = _getValue(this._s, crit.key.split('.'));
-						return _valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
+					baseStore = _getValue(this._s, crit.key.split('.'));
+					if (listener.key.indexOf('*') === 0) {
+						return _valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
 					}
+					return _valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
 				}
 			}
 			return result;
+		}
+		
+		function _toRegex(s) {
+			return s.replace(/\./g, '\\.').replace(/\*/g, '\\*');
 		}
 		
 		function _valueMatchesKeyString(val, key) {
 			var p, i=0, keys = key.split('.');
 			for (p in val) {
 				if (val.hasOwnProperty(p)) {
-					if (p === keys[i]) {
+					if (keys[i] === '*' || p === keys[i]) {
 						if ((typeof val[p] === 'object') && !(val[p] instanceof Array)) {
 							return _valueMatchesKeyString(val[p], keys.slice(i+1).join('.'));						
 						} else {

@@ -1,5 +1,27 @@
+/*
+ * Copyright (c) 2010 Matthew A. Taylor
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 JSDS = {
-	
+
 	_stores: {},
 	_listeners: {},
 	
@@ -52,8 +74,7 @@ JSDS = {
 		 * (fires 'store' event)
 		 */
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
-			var i, firstKey, result, updatedKeys = [key];
-			
+			var i, firstKey, result;
 			opts = opts || { update: false };
 			
 			// internal recursive store function
@@ -63,7 +84,6 @@ JSDS = {
 					keys = key.split('.');
 					oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
 					oldKey = keys.shift();
-					updatedKeys.push(oldKey);
 					if (store[oldKey] === undefined) {
 					    store[oldKey] = {};
 					}
@@ -72,7 +92,7 @@ JSDS = {
 				result = oldVal ? oldVal[key] : store[key];
 				// if this is an update, and there is an old value to update
 				if (opts.update) {
-				    updatedKeys = _update(store, val, key);
+				    _update(store, val, key);
 				} 
 				// if not an update, just overwrite old value
 				else {
@@ -83,15 +103,7 @@ JSDS = {
 			
 			result = _store(this._s, key, val);
 			
-			// prepend all updatedKeys with the base node name
-			firstKey = key.split('.').length ? key.split('.')[0] : key;
-			for (i=0; i<updatedKeys.length; i++) {
-			    if (updatedKeys[i].indexOf(firstKey) !== 0) {
-    			    updatedKeys[i] = firstKey + '.' + updatedKeys[i];
-			    }
-			}
-			
-			_fire.call(this, 'store', {keys: updatedKeys, value: val, id: this.id});
+			_fire.call(this, 'store', {key: key, value: val, id: this.id});
 			return result;
 		};
 		
@@ -128,7 +140,7 @@ JSDS = {
 				result = _getValue(s, keys);
 			}
 			
-			_fire.call(this, 'get', {keys:[key], value:result});
+			_fire.call(this, 'get', {key:key, value:result});
 			return result;
 		};
 		/**
@@ -150,19 +162,14 @@ JSDS = {
  		 *                  'scope': the scope object for the callback execution
  		 *                  'key': the storage key to listen for. If specified only stores into this key will
  		 *                          cause callback to be executed
- 		 *                  'keys': list of keys that will cause callback to be executed (overrides 'key' option)
 		 */
 		JSDataStore.prototype.on = function() {
-			var type = arguments[0], fn, scope, pname, keys;
+			var type = arguments[0], fn, scope, pname, key;
 			if (typeof arguments[1] === 'object') {
 				fn = arguments[1].callback;
 				scope = arguments[1].scope;
-				if (arguments[1].keys) {
-					keys = arguments[1].keys;
-				} else if (arguments[1].key) {
-					keys = [arguments[1].key];
-				} else {
-					keys = [];
+				if (arguments[1].key) {
+					key = arguments[1].key;
 				}
 			} else {
 				fn = arguments[1];
@@ -172,7 +179,7 @@ JSDS = {
 				this._l[type] = [];
 			}
 			scope = scope || this;
-			this._l[type].push({callback:fn, scope:scope, keys: keys});
+			this._l[type].push({callback:fn, scope:scope, key: key});
 			return this; // allow chaining
 		};
 		
@@ -214,55 +221,27 @@ JSDS = {
 		// recursive update function used to overwrite values within the store without 
 		// clobbering properties of objects
 		function _update(store, val, key) {
-		    var i, vprop, updatedKeys = [], tmpKeys, newUKey, valProp;
+		    var i, vprop, tmpKeys, newUKey, valProp;
 		    if (typeof val !== 'object' || val instanceof Array) {
 		        if (store[key] && val instanceof Array) {
 		            _mergeArraysIntoSet(store[key], val);
 		        } else {
     		        store[key] = val;
 		        }
-    		    updatedKeys.push(key);
 		    } else {
     		    for (vprop in val) {
     		        if (val.hasOwnProperty(vprop)) {
-    		            updatedKeys.push(key);
     		            if (!store[key]) {
     		                store[key] = {};
     		            }
     		            if (store[key].hasOwnProperty(vprop)) {
-                            updatedKeys = _updateExistingValues(store, key, val, vprop, updatedKeys);
+							_update(store[key], val[vprop], vprop);
     		            } else {
-    		                updatedKeys = _setNonExistingValues(store, key, val, vprop, updatedKeys);
+							store[key][vprop] = val[vprop];
     		            }
     		        }
     		    }
 		    }
-		    return updatedKeys
-		}
-		
-		function _setNonExistingValues(store, key, val, vprop, updatedKeys) {
-		    store[key][vprop] = val[vprop];
-            updatedKeys.push(key + '.' + vprop);
-            if (typeof val[vprop] === 'object' && !(val[vprop] instanceof Array)) {
-                for (valProp in val[vprop]) {
-                    if (val[vprop].hasOwnProperty(valProp)) {
-                        updatedKeys.push(key + '.' + vprop + '.' + valProp);
-                    }
-                }
-            }
-            return updatedKeys;
-		}
-		
-		function _updateExistingValues(store, key, val, vprop, updatedKeys) {
-		    var tmpKeys = _update(store[key], val[vprop], vprop),
-		        newUKey, i=0;
-            for (; i<tmpKeys.length; i++) {
-                newUKey = key + '.' + tmpKeys[i];
-                if (!_arrayContains(updatedKeys, newUKey)) {
-                    updatedKeys.push(newUKey);
-                }
-            }
-            return updatedKeys;
 		}
 		
 		// merge two arrays without duplicate values
@@ -296,6 +275,10 @@ JSDS = {
 		    for (;i<needle.length; i++) {
 		        match = _arrayContains(haystack, needle[i], function(lhs, rhs) {
 		            console.log ('Matching ' + lhs + ' and ' + rhs);
+					// if the wildcard is the first thing, change to .*
+					if (rhs.indexOf('*') === 0) {
+						rhs = '.' + rhs;
+					}
 		            return lhs.search(rhs) > -1;
 		        });
 		        if (match) {
@@ -311,26 +294,71 @@ JSDS = {
 			    localListeners = this._l[type] || [], 
 			    staticListeners = JSDS._listeners[type] || [];
 			    
-			args = args || {};
-		    
 			// mix local listeners
 			listeners = localListeners.concat(staticListeners);
 			
 			if (listeners.length) {
 				for (i=0; i<listeners.length; i++) {
 					opts = listeners[i];
-					if (opts.key && !opts.keys) {
-					    opts.keys = [opts.key];
-					}
-					if ((!opts.id || opts.id === this.id) && (!opts.keys || !opts.keys.length || _hasMatchingKey(args.keys, opts.keys))) {
+					if (_listenerApplies.call(this, opts, args)) {
 		        		scope = opts.scope || this;
-		        		if (opts.keys && opts.keys.length) {
-		        		    args.value = _getValue(this._s, opts.keys[0].split('.'));
+		        		if (opts.key && args) {
+		        		    args.value = _getValue(this._s, opts.key.split('.'));
 	        		    }
 		        		opts.callback.call(scope, type, args);    
 		            }
 				}
 			}
+		}
+		
+		function _listenerApplies(listener, crit) {
+			var result = false, last, lastDot, sub, k, breakout = false, baseStore, thisValue;
+			if (!listener.key || !crit) {
+				return true; 
+			}
+			if (!listener.id || listener.id === this.id) {
+				if (!crit.key || crit.key.match(_toRegex(listener.key))) {
+					return true;
+				}				
+				last = crit.key.length;
+				while (!breakout) {
+					sub = crit.key.substr(0, last);
+					last = sub.lastIndexOf('\.');
+					if (last < 0) {  
+						k = sub;
+						breakout = true;
+					} else {
+						k = sub.substr(0, last);
+					}
+					baseStore = _getValue(this._s, crit.key.split('.'));
+					if (listener.key.indexOf('*') === 0) {
+						return _valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
+					}
+					return _valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
+				}
+			}
+			return result;
+		}
+		
+		function _toRegex(s) {
+			return s.replace(/\./g, '\\.').replace(/\*/g, '\\*');
+		}
+		
+		function _valueMatchesKeyString(val, key) {
+			var p, i=0, keys = key.split('.');
+			for (p in val) {
+				if (val.hasOwnProperty(p)) {
+					if (keys[i] === '*' || p === keys[i]) {
+						if ((typeof val[p] === 'object') && !(val[p] instanceof Array)) {
+							return _valueMatchesKeyString(val[p], keys.slice(i+1).join('.'));						
+						} else {
+							return true;
+						}
+					}
+				}
+				i++;
+			}
+			return false;
 		}
 		
 		// used to copy branches within the store. Object and array friendly
@@ -354,11 +382,23 @@ JSDS = {
 			return newObj;
 		}
 		
-		// returns a value from a store given an array of keys that is mean to describe depth
+		// returns a value from a store given an array of keys that is meant to describe depth
 		// within the storage tree
 		function _getValue(store, keys) {
-			var key = keys.shift(), endKey;
-			if (store[key][keys[0]]) {
+			var key = keys.shift(), endKey, arrResult, p,
+				keysClone;
+			if (key === '*') {
+				arrResult = [];
+				
+				for (p in store) {
+					if (store.hasOwnProperty(p)) {
+						keysClone = _clone(keys);
+						arrResult.push(_getValue(store[p], keysClone));
+					}
+				}
+				return arrResult;
+			}
+			if (keys[0] && store[key] && (store[key][keys[0]] || keys[0] === '*')) {
 				return _getValue(store[key], keys);
 			} else {
 			    if (keys.length) {

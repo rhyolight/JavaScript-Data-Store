@@ -881,6 +881,11 @@ YUI().add('jsds_tests', function(Y) {
 				key: 'stuff.animals.mammals.dogs',
 				callback: function(type, args) {
 					dogCallbackCalled = true;
+					a.isArray(args.value);
+					aa.contains('Buttons', args.value);
+					aa.contains('Teela', args.value);
+					aa.contains('Sasha', args.value);
+					aa.contains('Ann-Marie', args.value);
 				}
 			});
 			
@@ -926,7 +931,54 @@ YUI().add('jsds_tests', function(Y) {
 			
 		},
 		
-		/* wildcards are on hold while I clear my head */
+		testSimpleWildcard_FirstPosition: function () {
+			var called = false;
+			this.s.on('store', {
+				key: '*.map.content',
+				callback: function(type, args) {
+					called = true;
+				}
+			});
+			this.s.store('63336', {
+				map: {
+					content: 'yoyoyo'
+				}
+			});
+			a.isTrue(called);
+		},
+		
+		testSimpleWildcard_FirstPosition_negative: function () {
+			var called = false;
+			this.s.on('store', {
+				key: '*.map.content',
+				callback: function(type, args) {
+					called = true;
+				}
+			});
+			this.s.store('63336', {
+				map: {
+					not_content: 'yoyoyo'
+				}
+			});
+			a.isFalse(called);
+		},
+		
+		testSimpleWildcard_MiddlePosition: function () {
+			var called = false;
+			this.s.on('store', {
+				key: '63336.*.content',
+				callback: function(type, args) {
+					called = true;
+				}
+			});
+			this.s.store('63336', {
+				map: {
+					content: 'yoyoyo'
+				}
+			});
+			a.isTrue(called);
+		},
+
 		/*
 		testUsingWildcardInKey: function() {
             var called = 0;
@@ -981,7 +1033,7 @@ YUI().add('jsds_tests', function(Y) {
 			
 			a.areEqual(2, called, 'callback not called');
 		},
-		
+		/*
 		testUsingWildcard_AsFirstThing_InKey: function() {
             var called = 0,
 				val = {
@@ -1028,7 +1080,6 @@ YUI().add('jsds_tests', function(Y) {
 			a.areEqual(1, called, 'callback should not have been called');
 		}
 		*/
-		
 	}));
 	
 	
