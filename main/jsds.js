@@ -1,3 +1,25 @@
+/*
+ * Copyright (c) 2010 Matthew A. Taylor
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 JSDS = {
 
 	_stores: {},
@@ -52,7 +74,7 @@ JSDS = {
 		 * (fires 'store' event)
 		 */
 		JSDataStore.prototype.store = function(key, val, opts /*optional*/) {
-			var i, firstKey, result, updatedKeys = [key];
+			var i, firstKey, result;
 			opts = opts || { update: false };
 			
 			// internal recursive store function
@@ -62,7 +84,6 @@ JSDS = {
 					keys = key.split('.');
 					oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
 					oldKey = keys.shift();
-					updatedKeys.push(oldKey);
 					if (store[oldKey] === undefined) {
 					    store[oldKey] = {};
 					}
@@ -71,7 +92,7 @@ JSDS = {
 				result = oldVal ? oldVal[key] : store[key];
 				// if this is an update, and there is an old value to update
 				if (opts.update) {
-				    updatedKeys = _update(store, val, key);
+				    _update(store, val, key);
 				} 
 				// if not an update, just overwrite old value
 				else {
@@ -81,14 +102,6 @@ JSDS = {
 			}
 			
 			result = _store(this._s, key, val);
-			
-			// prepend all updatedKeys with the base node name
-			// firstKey = key.split('.').length ? key.split('.')[0] : key;
-			// for (i=0; i<updatedKeys.length; i++) {
-			//     if (updatedKeys[i].indexOf(firstKey) !== 0) {
-			//     			    updatedKeys[i] = firstKey + '.' + updatedKeys[i];
-			//     }
-			// }
 			
 			_fire.call(this, 'store', {key: key, value: val, id: this.id});
 			return result;
@@ -208,55 +221,27 @@ JSDS = {
 		// recursive update function used to overwrite values within the store without 
 		// clobbering properties of objects
 		function _update(store, val, key) {
-		    var i, vprop, updatedKeys = [], tmpKeys, newUKey, valProp;
+		    var i, vprop, tmpKeys, newUKey, valProp;
 		    if (typeof val !== 'object' || val instanceof Array) {
 		        if (store[key] && val instanceof Array) {
 		            _mergeArraysIntoSet(store[key], val);
 		        } else {
     		        store[key] = val;
 		        }
-    		    updatedKeys.push(key);
 		    } else {
     		    for (vprop in val) {
     		        if (val.hasOwnProperty(vprop)) {
-    		            updatedKeys.push(key);
     		            if (!store[key]) {
     		                store[key] = {};
     		            }
     		            if (store[key].hasOwnProperty(vprop)) {
-                            updatedKeys = _updateExistingValues(store, key, val, vprop, updatedKeys);
+							_update(store[key], val[vprop], vprop);
     		            } else {
-    		                updatedKeys = _setNonExistingValues(store, key, val, vprop, updatedKeys);
+							store[key][vprop] = val[vprop];
     		            }
     		        }
     		    }
 		    }
-		    return updatedKeys;
-		}
-		
-		function _setNonExistingValues(store, key, val, vprop, updatedKeys) {
-		    store[key][vprop] = val[vprop];
-            updatedKeys.push(key + '.' + vprop);
-            if (typeof val[vprop] === 'object' && !(val[vprop] instanceof Array)) {
-                for (valProp in val[vprop]) {
-                    if (val[vprop].hasOwnProperty(valProp)) {
-                        updatedKeys.push(key + '.' + vprop + '.' + valProp);
-                    }
-                }
-            }
-            return updatedKeys;
-		}
-		
-		function _updateExistingValues(store, key, val, vprop, updatedKeys) {
-		    var tmpKeys = _update(store[key], val[vprop], vprop),
-		        newUKey, i=0;
-            for (; i<tmpKeys.length; i++) {
-                newUKey = key + '.' + tmpKeys[i];
-                if (!_arrayContains(updatedKeys, newUKey)) {
-                    updatedKeys.push(newUKey);
-                }
-            }
-            return updatedKeys;
 		}
 		
 		// merge two arrays without duplicate values
@@ -327,7 +312,7 @@ JSDS = {
 		}
 		
 		function _listenerApplies(listener, crit) {
-			var result = false, last, lastDot, sub, k, breakout = false, thisStore, thisValue;
+			var result = false, last, lastDot, sub, k, breakout = false, baseStore, thisValue;
 			if (!listener.key || !crit) {
 				return true; 
 			}
@@ -346,13 +331,29 @@ JSDS = {
 						k = sub.substr(0, last);
 					}
 					if (listener.key.match(k)) {
-						thisStore = _getValue(this._s, [k]);
-						thisValue = _getValue(thisStore, listener.key.substr(crit.key.length+1).split('.'));
-						return (!typeof thisValue === 'undefined');
+						baseStore = _getValue(this._s, crit.key.split('.'));
+						return _valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
 					}
 				}
 			}
 			return result;
+		}
+		
+		function _valueMatchesKeyString(val, key) {
+			var p, i=0, keys = key.split('.');
+			for (p in val) {
+				if (val.hasOwnProperty(p)) {
+					if (p === keys[i]) {
+						if ((typeof val[p] === 'object') && !(val[p] instanceof Array)) {
+							return _valueMatchesKeyString(val[p], keys.slice(i+1).join('.'));						
+						} else {
+							return true;
+						}
+					}
+				}
+				i++;
+			}
+			return false;
 		}
 		
 		// used to copy branches within the store. Object and array friendly
