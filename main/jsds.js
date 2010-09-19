@@ -1,5 +1,5 @@
 JSDS = {
-	_currentValue: null,
+
 	_stores: {},
 	_listeners: {},
 	
@@ -76,7 +76,6 @@ JSDS = {
 				// if not an update, just overwrite old value
 				else {
     				store[key] = val;
-    				_currentValue = val;
 				}
 				return result;
 			}
@@ -128,7 +127,7 @@ JSDS = {
 				result = _getValue(s, keys);
 			}
 			
-			_fire.call(this, 'get', {keys:[key], value:result});
+			_fire.call(this, 'get', {key:key, value:result});
 			return result;
 		};
 		/**
@@ -215,7 +214,6 @@ JSDS = {
 		            _mergeArraysIntoSet(store[key], val);
 		        } else {
     		        store[key] = val;
-    		        _currentValue = val;
 		        }
     		    updatedKeys.push(key);
 		    } else {
@@ -238,7 +236,6 @@ JSDS = {
 		
 		function _setNonExistingValues(store, key, val, vprop, updatedKeys) {
 		    store[key][vprop] = val[vprop];
-		    _currentValue = val[vprop];
             updatedKeys.push(key + '.' + vprop);
             if (typeof val[vprop] === 'object' && !(val[vprop] instanceof Array)) {
                 for (valProp in val[vprop]) {
@@ -312,7 +309,7 @@ JSDS = {
 			    localListeners = this._l[type] || [], 
 			    staticListeners = JSDS._listeners[type] || [];
 			    
-			args = args || {};
+//			args = args || {};
 		    
 			// mix local listeners
 			listeners = localListeners.concat(staticListeners);
@@ -322,9 +319,8 @@ JSDS = {
 					opts = listeners[i];
 					if (_listenerApplies(opts, args)) {
 		        		scope = opts.scope || this;
-		        		if (opts.key) {
+		        		if (opts.key && args) {
 		        		    args.value = _getValue(this._s, opts.key.split('.'));
-//		        			args.value = _currentValue;
 	        		    }
 		        		opts.callback.call(scope, type, args);    
 		            }
@@ -334,11 +330,11 @@ JSDS = {
 		
 		function _listenerApplies(listener, crit) {
 			var result = false, last, lastDot, sub, k, breakout = false;
-			if (!listener.key) {
+			if (!listener.key || !crit) {
 				return true; 
 			}
 			if (!listener.id || listener.id === this.id) {
-				if (crit.key.match(listener.key)) {
+				if (!crit.key || crit.key.match(listener.key)) {
 					return true;
 				}				
 				last = crit.key.length;
