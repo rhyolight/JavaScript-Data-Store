@@ -309,15 +309,13 @@ JSDS = {
 			    localListeners = this._l[type] || [], 
 			    staticListeners = JSDS._listeners[type] || [];
 			    
-//			args = args || {};
-		    
 			// mix local listeners
 			listeners = localListeners.concat(staticListeners);
 			
 			if (listeners.length) {
 				for (i=0; i<listeners.length; i++) {
 					opts = listeners[i];
-					if (_listenerApplies(opts, args)) {
+					if (_listenerApplies.call(this, opts, args)) {
 		        		scope = opts.scope || this;
 		        		if (opts.key && args) {
 		        		    args.value = _getValue(this._s, opts.key.split('.'));
@@ -329,7 +327,7 @@ JSDS = {
 		}
 		
 		function _listenerApplies(listener, crit) {
-			var result = false, last, lastDot, sub, k, breakout = false;
+			var result = false, last, lastDot, sub, k, breakout = false, thisStore, thisValue;
 			if (!listener.key || !crit) {
 				return true; 
 			}
@@ -348,33 +346,11 @@ JSDS = {
 						k = sub.substr(0, last);
 					}
 					if (listener.key.match(k)) {
-						return true;
+						thisStore = _getValue(this._s, [k]);
+						thisValue = _getValue(thisStore, listener.key.substr(crit.key.length+1).split('.'));
+						return (!typeof thisValue === 'undefined');
 					}
-
-//					if (_arrayContains(listener.key.split('.'), k)) {
-//						result = true; 
-//						break;
-//					}
 				}
-				
-//				if (crit.key.match(listener.key)) {
-//					return true;
-//				}
-//				last = crit.key.length;
-//				while (!breakout) {
-//					sub = crit.key.substr(0, last);
-//					last = sub.lastIndexOf('\.');
-//					if (last < 0) {  
-//						k = sub;
-//						breakout = true;
-//					} else {
-//						k = sub.substr(0, last);
-//					}
-//					if (_arrayContains(listener.key.split('.'), k)) {
-//						result = true; 
-//						break;
-//					}
-//				}
 			}
 			return result;
 		}
@@ -416,7 +392,7 @@ JSDS = {
 				}
 				return arrResult;
 			}
-			if (keys[0] && (store[key][keys[0]] || keys[0] === '*')) {
+			if (keys[0] && store[key] && (store[key][keys[0]] || keys[0] === '*')) {
 				return _getValue(store[key], keys);
 			} else {
 			    if (keys.length) {
