@@ -978,6 +978,34 @@ YUI().add('jsds_tests', function(Y) {
 			});
 			a.isTrue(called);
 		},
+		
+		testSimpleWildcard_WhenStoringInDeepKey: function () {
+			var called = false;
+			this.s.store('animals', {
+				frogs: {
+					number: 11,
+					area: 'north'
+				},
+				lizards: {
+					number: 24,
+					area: 'east'
+				},
+				veggies: {
+					cucumbers: {
+						area: 'west'
+					}
+				}
+			});
+			
+			this.s.on('store', {
+				key: 'animals.*.number',
+				callback: function(type, args) {
+					called = true;
+				}
+			});
+			this.s.store('animals.lizards.number', 40);
+			a.isTrue(called);
+		},
 
 		/*
 		testUsingWildcardInKey: function() {

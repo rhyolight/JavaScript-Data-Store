@@ -341,7 +341,7 @@ JSDS = {
 		}
 		
 		function _toRegex(s) {
-			return s.replace(/\./g, '\\.').replace(/\*/g, '\\*');
+			return s.replace(/\./g, '\\.').replace(/\*/g, '\.*');
 		}
 		
 		function _valueMatchesKeyString(val, key) {
