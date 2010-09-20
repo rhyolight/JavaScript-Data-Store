@@ -122,6 +122,16 @@
 			+ '<span class="hp">HP: ' + enemy.crock.hp + '</span>'
 			+ '<span class="mp">MP: ' + enemy.crock.mp + '</span>'
 			+ '</div>');
+			
+		$('#attack').click(function(e) {
+			$.ajax({
+                url: 'http://s.dangertree.net/jsds',
+                jsds: {
+                    id: 'battle',
+                    target: 'query.results.Result'
+                }
+            });
+		});
         
     });
 </script>
