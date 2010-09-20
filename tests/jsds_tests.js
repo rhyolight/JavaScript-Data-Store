@@ -936,7 +936,9 @@ YUI().add('jsds_tests', function(Y) {
 			this.s.on('store', {
 				key: '*.map.content',
 				callback: function(type, args) {
-					called = true;
+					called = true;;
+					a.areEqual('63336.map.content', args.value.key);
+					a.areEqual('yoyoyo', args.value.value);
 				}
 			});
 			this.s.store('63336', {

@@ -109,12 +109,9 @@
         $.jsds.on('store', {
             callback: function(type, args) {
 				var i=0, 
-					maps = args.value instanceof Array ? args.value : [args.value],
 					$map = $('#map');
-				$map.html('');
-				for (; i < maps.length; i++) {
-					$map.append('<img src="' + maps[i] + '"><br/>');
-				}
+				$map.html('<h3>Map of ' + args.value.key.split('.')[0] + '</h3><img src="' + args.value.value + '"><br/>');
+				
             },
             key: '*.map.content'
         });

@@ -290,7 +290,7 @@ JSDS = {
 		
 		// fire an event of 'type' with included arguments to be passed to listeners functions
 		function _fire(type, args) {
-			var i, opts, scope, listeners, returnValue,
+			var i, opts, scope, listeners, pulledKeys,
 			    localListeners = this._l[type] || [], 
 			    staticListeners = JSDS._listeners[type] || [];
 			    
@@ -303,7 +303,14 @@ JSDS = {
 					if (_listenerApplies.call(this, opts, args)) {
 		        		scope = opts.scope || this;
 		        		if (opts.key && args) {
-		        		    args.value = _getValue(this._s, opts.key.split('.'));
+							if (opts.key.indexOf('*') >= 0) {
+								pulledKeys = _pullOutKeys(args.value);
+								args.value = {};
+								args.value.key = args.key + pulledKeys;
+								args.value.value = _getValue(this._s, args.value.key.split('.'));
+							} else {
+			        		    args.value = _getValue(this._s, opts.key.split('.'));
+							}
 	        		    }
 		        		opts.callback.call(scope, type, args);    
 		            }
@@ -312,7 +319,7 @@ JSDS = {
 		}
 		
 		function _listenerApplies(listener, crit) {
-			var result = false, last, lastDot, sub, k, breakout = false, baseStore, thisValue;
+			var result = false, last, lastDot, sub, k, breakout = false;
 			if (!listener.key || !crit) {
 				return true; 
 			}
@@ -330,14 +337,35 @@ JSDS = {
 					} else {
 						k = sub.substr(0, last);
 					}
-					baseStore = _getValue(this._s, crit.key.split('.'));
+					//baseStore = _getValue(this._s, crit.key.split('.'));
 					if (listener.key.indexOf('*') === 0) {
 						return _valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
+					} else if (listener.key.indexOf('*') > 0) {
+						var replacedKey = _getCompleteKey(crit);
+						return _toRegex(replacedKey).match(listener.key);
 					}
 					return _valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
 				}
 			}
 			return result;
+		}
+		
+		function _getCompleteKey(o) {
+			var val = o.value, key = o.key, result = key;
+			return key + _pullOutKeys(val);
+		}
+		
+		function _pullOutKeys(v) {
+			var p, res = '';
+			for (p in v) {
+				if (v.hasOwnProperty(p)) {
+					res += '.' + p;
+					if (typeof v[p] === 'object' && !(v[p] instanceof Array)) {
+						res += _pullOutKeys(v[p]);
+					}
+				}
+			}
+			return res;
 		}
 		
 		function _toRegex(s) {
