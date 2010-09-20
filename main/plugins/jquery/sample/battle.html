@@ -1,0 +1,130 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
+
+<html lang="en">
+<head>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<title>JSDS Demo: BATTLE!</title>
+	<meta name="generator" content="TextMate http://macromates.com/">
+	<meta name="author" content="rhyolight">
+	<!-- Date: 2010-08-02 -->
+	<style>
+	    .stats span.mp {
+	    	float: right;
+	    }
+		#head {
+			position: absolute;
+			top: 0px;
+			width: 100%;
+			text-align: center;
+		}
+		#party {
+			background-color: #ff8787;
+			width: 300px;
+			padding: 20px;
+			border: 1px solid black;
+		}
+		#party li {
+			border: 1px solid black;
+			list-style-type: none;
+			background-color: #fff99d;
+			margin-top: 20px;
+			padding: 6px 30px;
+		}
+		#enemy {
+			float: right;
+			width: 300px;
+			background-color: #f76649;
+			border: solid 1px black;
+			padding: 6px 30px;
+		}
+		img {
+			border: solid 1px black;
+		}
+	</style>
+</head>
+<body>
+
+<script src="http://ajax.microsoft.com/ajax/jquery/jquery-1.4.2.js"></script>
+<script src="../jquery.jsds.js"></script>
+<script src="../jsds-viewer.js"></script>
+
+<div id="head">
+	<h1>JSDS Demo</h1>
+	<h2>JavaScript BATTLE</h2>
+	<button id='attack'>ATTACK</button><br/>
+	<button id='defend'>DEFEND</button>
+</div>
+
+<div id='enemy'></div>
+<ul id='party'></ul>
+
+<script>
+	
+	$(function() {
+    
+		var party, $party = $('#party'), 
+			enemy, $enemy = $('#enemy'), 
+			id, member,
+			battleStore = JSDS.create('battle');
+		
+		battleStore.store('stats', {
+			party: {
+				brendaneich: {
+					name: 'Brendan Eich',
+					hp: 200,
+					mp: 200,
+					power: 10
+				},
+				jeresig: {
+					name: 'John Resig',
+					hp: 200,
+					mp: 200,
+					power: 10
+				},
+				slicknet: {
+					name: 'Nicholas Zakas',
+					hp: 200,
+					mp: 200,
+					power: 10
+				}
+			},
+			enemy: {
+				crock: {
+					name: 'Douglas Crockford',
+					hp: 1000,
+					mp: 1000,
+					power: 100
+				}
+			}
+		});
+		
+		party = battleStore.get('stats.party');
+		enemy = battleStore.get('stats.enemy');
+		
+		for (id in party) {
+			if (party.hasOwnProperty(id)) {
+				member = party[id];
+				$party.append('<li>'
+					+ '<div class="title">' + member.name + '</div>' 
+					+ '<img src="images/' + id + '.jpeg"/>'
+					+ '<div class="stats">'
+					+ '<span class="hp">HP: ' + member.hp + '</span>'
+					+ '<span class="mp">MP: ' + member.mp + '</span>'
+					+ '</div>'
+					+ '</li>');
+			}
+		}
+		
+		$enemy.append('<div class="title">' + enemy.crock.name + '</div>' 
+			+ '<img src="images/crock.jpeg"/>'
+			+ '<div class="stats">'
+			+ '<span class="hp">HP: ' + enemy.crock.hp + '</span>'
+			+ '<span class="mp">MP: ' + enemy.crock.mp + '</span>'
+			+ '</div>');
+        
+    });
+</script>
+
+</body>
+</html>
