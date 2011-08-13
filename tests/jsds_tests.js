@@ -1,4 +1,4 @@
-YUI().add('jsds_tests', function(Y) {
+YUI.add('jsds_tests', function(Y) {
 
 	var suite = new Y.Test.Suite("JSDS_Suite"),
 		a = Y.Assert,
@@ -1062,7 +1062,8 @@ YUI().add('jsds_tests', function(Y) {
 			this.s.store('stuff.veggies.squash.number', 444);
 			
 			a.areEqual(2, called, 'callback not called');
-		},
+		}
+        
 		/*
 		testUsingWildcard_AsFirstThing_InKey: function() {
             var called = 0,
