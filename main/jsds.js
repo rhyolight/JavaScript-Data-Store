@@ -22,12 +22,28 @@
 
 (function() {
 
-    var REGEX_DOT = /\./g,
-        REGEX_STAR = /\*/g;
+    var REGEX_DOT_G = /\./g,
+        BSLASH_DOT = '\.',
+        REGEX_STAR_G = /\*/g,
+        // private functions
+        storeIt,
+        update,
+        mergeArraysIntoSet,
+        arrayContains,
+        fire,
+        listenerApplies,
+        getCompleteKey,
+        pullOutKeys,
+        toRegex,
+        valueMatchesKeyString,
+        clone,
+        getValue,
+        randomId;
 
-    /************************************************************************
-    /* The JSDataStore class
-    /************************************************************************/
+    /*************************/
+    /* The JSDataStore Class */
+    /*************************/
+
     function JSDataStore(id) {
         // data stores
         this._s = {};
@@ -52,36 +68,10 @@
          * (fires 'store' event)
          */
         store: function(key, val, opts /*optional*/) {
-            var i, firstKey, result;
+            var result;
             opts = opts || { update: false };
-
-            // internal recursive store function
-            function _store(store, key, val, oldVal /*optional*/) {
-                var result, keys, oldKey;
-                if (key.indexOf('\.') >= 0) {
-                    keys = key.split('.');
-                    oldVal = store[keys[0]] ? _clone(store[keys[0]]) : undefined;
-                    oldKey = keys.shift();
-                    if (store[oldKey] === undefined) {
-                        store[oldKey] = {};
-                    }
-                    return _store(store[oldKey], keys.join('.'), val, oldVal);
-                }
-                result = oldVal ? oldVal[key] : store[key];
-                // if this is an update, and there is an old value to update
-                if (opts.update) {
-                    _update(store, val, key);
-                }
-                // if not an update, just overwrite old value
-                else {
-                    store[key] = val;
-                }
-                return result;
-            }
-
-            result = _store(this._s, key, val);
-
-            _fire.call(this, 'store', {key: key, value: val, id: this.id});
+            result = storeIt(this._s, key, opts, val);
+            fire.call(this, 'store', {key: key, value: val, id: this.id});
             return result;
         },
 
@@ -96,14 +86,14 @@
         get: function(key) {
             var s = this._s, keys, i=0, j=0, v, result;
 
-            if (arguments.length === 1 && key.indexOf('\.') < 0) {
+            if (arguments.length === 1 && key.indexOf(BSLASH_DOT) < 0) {
                 result = s[key];
             } else {
                 if (arguments.length > 1) {
                     keys = [];
                     for (i=0; i<arguments.length; i++) {
-                        if (arguments[i].indexOf('\.') > -1) {
-                            var splitKeys = arguments[i].split('\.');
+                        if (arguments[i].indexOf(BSLASH_DOT) > -1) {
+                            var splitKeys = arguments[i].split(BSLASH_DOT);
                             for (j=0; j<splitKeys.length; j++) {
                                 keys.push(splitKeys[j]);
                             }
@@ -111,14 +101,14 @@
                             keys.push(arguments[i]);
                         }
                     }
-                } else if (key.indexOf('\.') > -1) {
-                    keys = key.split('\.');
+                } else if (key.indexOf(BSLASH_DOT) > -1) {
+                    keys = key.split(BSLASH_DOT);
                 }
 
-                result = _getValue(s, keys);
+                result = getValue(s, keys);
             }
 
-            _fire.call(this, 'get', {key:key, value:result});
+            fire.call(this, 'get', {key:key, value:result});
             return result;
         },
 
@@ -169,7 +159,7 @@
          */
         clear: function() {
             this._s = {};
-            _fire.call(this, 'clear');
+            fire.call(this, 'clear');
         },
 
         /**
@@ -194,236 +184,13 @@
                 }
             }
             delete JSDS._stores[this.id];
-            _fire.call(this, 'remove');
+            fire.call(this, 'remove');
         }
     };
 
-    // recursive update function used to overwrite values within the store without
-    // clobbering properties of objects
-    function _update(store, val, key) {
-        var vprop;
-        if (typeof val !== 'object' || val instanceof Array) {
-            if (store[key] && val instanceof Array) {
-                _mergeArraysIntoSet(store[key], val);
-            } else {
-                store[key] = val;
-            }
-        } else {
-            for (vprop in val) {
-                if (val.hasOwnProperty(vprop)) {
-                    if (!store[key]) {
-                        store[key] = {};
-                    }
-                    if (store[key].hasOwnProperty(vprop)) {
-                        _update(store[key], val[vprop], vprop);
-                    } else {
-                        store[key][vprop] = val[vprop];
-                    }
-                }
-            }
-        }
-    }
-
-    // merge two arrays without duplicate values
-    function _mergeArraysIntoSet(lhs, rhs) {
-        var i=0;
-        for (; i<rhs.length; i++) {
-            if (!_arrayContains(lhs, rhs[i])) {
-                lhs.push(rhs[i]);
-            }
-        }
-    }
-
-    // internal utility function
-    function _arrayContains(arr, val, comparator /* optional */) {
-        var i=0;
-        comparator = comparator || function(lhs, rhs) {
-            return lhs === rhs;
-        };
-        for (;i<arr.length;i++) {
-            if (comparator(arr[i], val)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-//		// compares two arrays of keys together, returning true if haystack contains a value
-//		// that needle also contains
-//		function _hasMatchingKey(haystack, needle) {
-//		    var i=0, match;
-//		    for (;i<needle.length; i++) {
-//		        match = _arrayContains(haystack, needle[i], function(lhs, rhs) {
-//		            console.log ('Matching ' + lhs + ' and ' + rhs);
-//					// if the wildcard is the first thing, change to .*
-//					if (rhs.indexOf('*') === 0) {
-//						rhs = '.' + rhs;
-//					}
-//		            return lhs.search(rhs) > -1;
-//		        });
-//		        if (match) {
-//		            return true;
-//		        }
-//		    }
-//		    return false;
-//		}
-
-    // fire an event of 'type' with included arguments to be passed to listeners functions
-    // WARNING: this function must be invoked as _fire.call(scope, type, args) because it uses 'this'.
-    // The reason is so this function is not publicly exposed on JSDS instances
-    function _fire(type, args) {
-        var i, opts, scope, listeners, pulledKeys,
-            localListeners = this._l[type] || [],
-            staticListeners = JSDS._listeners[type] || [];
-
-        // mix local listeners
-        listeners = localListeners.concat(staticListeners);
-
-        if (listeners.length) {
-            for (i=0; i<listeners.length; i++) {
-                opts = listeners[i];
-                if (_listenerApplies.call(this, opts, args)) {
-                    scope = opts.scope || this;
-                    if (opts.key && args) {
-                        if (opts.key.indexOf('*') >= 0) {
-                            pulledKeys = _pullOutKeys(args.value);
-                            args.value = {};
-                            args.value.key = args.key + pulledKeys;
-                            args.value.value = _getValue(this._s, args.value.key.split('.'));
-                        } else {
-                            args.value = _getValue(this._s, opts.key.split('.'));
-                        }
-                    }
-                    opts.callback.call(scope, type, args);
-                }
-            }
-        }
-    }
-
-    // WARNING: this function must be invoked as _listenerApplies.call(scope, listener, crit) because it uses 'this'.
-    // The reason is so this function is not publicly exposed on JSDS instances
-    function _listenerApplies(listener, crit) {
-        var result = false, last, lastDot, sub, k, breakout = false;
-        if (!listener.key || !crit) {
-            return true;
-        }
-        if (!listener.id || listener.id === this.id) {
-            if (!crit.key || crit.key.match(_toRegex(listener.key))) {
-                return true;
-            }
-            last = crit.key.length;
-            while (!breakout) {
-                sub = crit.key.substr(0, last);
-                last = sub.lastIndexOf('\.');
-                if (last < 0) {
-                    k = sub;
-                    breakout = true;
-                } else {
-                    k = sub.substr(0, last);
-                }
-                //baseStore = _getValue(this._s, crit.key.split('.'));
-                if (listener.key.indexOf('*') === 0) {
-                    return _valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
-                } else if (listener.key.indexOf('*') > 0) {
-                    var replacedKey = _getCompleteKey(crit);
-                    return _toRegex(replacedKey).match(listener.key);
-                }
-                return _valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
-            }
-        }
-        return result;
-    }
-
-    function _getCompleteKey(o) {
-        var val = o.value, key = o.key;
-        return key + _pullOutKeys(val);
-    }
-
-    function _pullOutKeys(v) {
-        var p, res = '';
-        for (p in v) {
-            if (v.hasOwnProperty(p)) {
-                res += '.' + p;
-                if (typeof v[p] === 'object' && !(v[p] instanceof Array)) {
-                    res += _pullOutKeys(v[p]);
-                }
-            }
-        }
-        return res;
-    }
-
-    function _toRegex(s) {
-        return s.replace(REGEX_DOT, '\\.').replace(REGEX_STAR, '\.*');
-    }
-
-    function _valueMatchesKeyString(val, key) {
-        var p, i=0, keys = key.split('.');
-        for (p in val) {
-            if (val.hasOwnProperty(p)) {
-                if (keys[i] === '*' || p === keys[i]) {
-                    if ((typeof val[p] === 'object') && !(val[p] instanceof Array)) {
-                        return _valueMatchesKeyString(val[p], keys.slice(i+1).join('.'));
-                    } else {
-                        return true;
-                    }
-                }
-            }
-            i++;
-        }
-        return false;
-    }
-
-    // used to copy branches within the store. Object and array friendly
-    function _clone(val) {
-        var newObj, i, prop;
-        if (val instanceof Array) {
-            newObj = [];
-            for (i=0; i<val.length; i++) {
-                newObj[i] = _clone(val[i]);
-            }
-        } else if (typeof val === 'object'){
-            newObj = {};
-            for (prop in val) {
-                if (val.hasOwnProperty(prop)) {
-                    newObj[prop] = _clone(val[prop]);
-                }
-            }
-        } else {
-            return val;
-        }
-        return newObj;
-    }
-
-    // returns a value from a store given an array of keys that is meant to describe depth
-    // within the storage tree
-    function _getValue(store, keys) {
-        var key = keys.shift(), endKey, arrResult, p,
-            keysClone;
-        if (key === '*') {
-            arrResult = [];
-
-            for (p in store) {
-                if (store.hasOwnProperty(p)) {
-                    keysClone = _clone(keys);
-                    arrResult.push(_getValue(store[p], keysClone));
-                }
-            }
-            return arrResult;
-        }
-        if (keys[0] && store[key] && (store[key][keys[0]] || keys[0] === '*')) {
-            return _getValue(store[key], keys);
-        } else {
-            if (keys.length) {
-                endKey = keys[0];
-            } else {
-                endKey = key;
-            }
-            return store[endKey];
-        }
-    }
-    /************************************************************************
-    /* End of JSDataStore class
-    /************************************************************************/
+    /*************************/
+    /* Global JSDS namespace */
+    /*************************/
 
     window.JSDS = {
 
@@ -438,20 +205,10 @@
          */
         create: function(id) {
 
-            id = id || _randomId();
+            id = id || randomId();
 
             if (this._stores[id]) {
                 throw new Error('Cannot overwrite existing data store "' + id + '"!');
-            }
-
-            function _randomId() {
-                var text = "",
-                    i=0,
-                    possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-                for(; i < 10; i++ ) {
-                    text += possible.charAt(Math.floor(Math.random() * possible.length));
-                }
-                return text;
             }
 
             this._stores[id] = new JSDataStore(id);
@@ -532,5 +289,246 @@
         }
     };
 
+    /*****************/
+    /* PRIVATE STUFF */
+    /*****************/
+
+    // recursive store function
+    storeIt = function(store, key, opts, val, oldVal /*optional*/) {
+        var result, keys, oldKey;
+        if (key.indexOf(BSLASH_DOT) >= 0) {
+            keys = key.split('.');
+            oldVal = store[keys[0]] ? clone(store[keys[0]]) : undefined;
+            oldKey = keys.shift();
+            if (store[oldKey] === undefined) {
+                store[oldKey] = {};
+            }
+            return storeIt(store[oldKey], keys.join('.'), opts, val, oldVal);
+        }
+        result = oldVal ? oldVal[key] : store[key];
+        // if this is an update, and there is an old value to update
+        if (opts.update) {
+            update(store, val, key);
+        }
+        // if not an update, just overwrite the old value
+        else {
+            store[key] = val;
+        }
+        return result;
+    };
+
+    // recursive update function used to overwrite values within the store without
+    // clobbering properties of objects
+    update = function(store, val, key) {
+        var vprop;
+        if (typeof val !== 'object' || val instanceof Array) {
+            if (store[key] && val instanceof Array) {
+                mergeArraysIntoSet(store[key], val);
+            } else {
+                store[key] = val;
+            }
+        } else {
+            for (vprop in val) {
+                if (val.hasOwnProperty(vprop)) {
+                    if (!store[key]) {
+                        store[key] = {};
+                    }
+                    if (store[key].hasOwnProperty(vprop)) {
+                        update(store[key], val[vprop], vprop);
+                    } else {
+                        store[key][vprop] = val[vprop];
+                    }
+                }
+            }
+        }
+    };
+
+    // merge two arrays without duplicate values
+    mergeArraysIntoSet = function(lhs, rhs) {
+        var i=0;
+        for (; i<rhs.length; i++) {
+            if (!arrayContains(lhs, rhs[i])) {
+                lhs.push(rhs[i]);
+            }
+        }
+    };
+
+    // internal utility function
+    arrayContains = function(arr, val, comparator /* optional */) {
+        var i=0;
+        comparator = comparator || function(lhs, rhs) {
+            return lhs === rhs;
+        };
+        for (;i<arr.length;i++) {
+            if (comparator(arr[i], val)) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    // fire an event of 'type' with included arguments to be passed to listeners functions
+    // WARNING: this function must be invoked as fire.call(scope, type, args) because it uses 'this'.
+    // The reason is so this function is not publicly exposed on JSDS instances
+    fire = function(type, args) {
+        var i, opts, scope, listeners, pulledKeys,
+            localListeners = this._l[type] || [],
+            staticListeners = JSDS._listeners[type] || [];
+
+        // mix local listeners
+        listeners = localListeners.concat(staticListeners);
+
+        if (listeners.length) {
+            for (i=0; i<listeners.length; i++) {
+                opts = listeners[i];
+                if (listenerApplies.call(this, opts, args)) {
+                    scope = opts.scope || this;
+                    if (opts.key && args) {
+                        if (opts.key.indexOf('*') >= 0) {
+                            pulledKeys = pullOutKeys(args.value);
+                            args.value = {};
+                            args.value.key = args.key + pulledKeys;
+                            args.value.value = getValue(this._s, args.value.key.split('.'));
+                        } else {
+                            args.value = getValue(this._s, opts.key.split('.'));
+                        }
+                    }
+                    opts.callback.call(scope, type, args);
+                }
+            }
+        }
+    };
+
+    // WARNING: this function must be invoked as listenerApplies.call(scope, listener, crit) because it uses 'this'.
+    // The reason is so this function is not publicly exposed on JSDS instances
+    listenerApplies = function(listener, crit) {
+        var result = false, last, lastDot, sub, k, breakout = false;
+        if (!listener.key || !crit) {
+            return true;
+        }
+        if (!listener.id || listener.id === this.id) {
+            if (!crit.key || crit.key.match(toRegex(listener.key))) {
+                return true;
+            }
+            last = crit.key.length;
+            while (!breakout) {
+                sub = crit.key.substr(0, last);
+                last = sub.lastIndexOf(BSLASH_DOT);
+                if (last < 0) {
+                    k = sub;
+                    breakout = true;
+                } else {
+                    k = sub.substr(0, last);
+                }
+                //baseStore = getValue(this._s, crit.key.split('.'));
+                if (listener.key.indexOf('*') === 0) {
+                    return valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
+                } else if (listener.key.indexOf('*') > 0) {
+                    var replacedKey = getCompleteKey(crit);
+                    return toRegex(replacedKey).match(listener.key);
+                }
+                return valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
+            }
+        }
+        return result;
+    };
+
+    getCompleteKey = function(o) {
+        var val = o.value, key = o.key;
+        return key + pullOutKeys(val);
+    };
+
+    pullOutKeys = function(v) {
+        var p, res = '';
+        for (p in v) {
+            if (v.hasOwnProperty(p)) {
+                res += '.' + p;
+                if (typeof v[p] === 'object' && !(v[p] instanceof Array)) {
+                    res += pullOutKeys(v[p]);
+                }
+            }
+        }
+        return res;
+    };
+
+    toRegex = function(s) {
+        return s.replace(REGEX_DOT_G, '\\.').replace(REGEX_STAR_G, '\.*');
+    };
+
+    valueMatchesKeyString = function(val, key) {
+        var p, i=0, keys = key.split('.');
+        for (p in val) {
+            if (val.hasOwnProperty(p)) {
+                if (keys[i] === '*' || p === keys[i]) {
+                    if ((typeof val[p] === 'object') && !(val[p] instanceof Array)) {
+                        return valueMatchesKeyString(val[p], keys.slice(i+1).join('.'));
+                    } else {
+                        return true;
+                    }
+                }
+            }
+            i++;
+        }
+        return false;
+    };
+
+    // used to copy branches within the store. Object and array friendly
+    clone = function(val) {
+        var newObj, i, prop;
+        if (val instanceof Array) {
+            newObj = [];
+            for (i=0; i<val.length; i++) {
+                newObj[i] = clone(val[i]);
+            }
+        } else if (typeof val === 'object'){
+            newObj = {};
+            for (prop in val) {
+                if (val.hasOwnProperty(prop)) {
+                    newObj[prop] = clone(val[prop]);
+                }
+            }
+        } else {
+            return val;
+        }
+        return newObj;
+    };
+
+    // returns a value from a store given an array of keys that is meant to describe depth
+    // within the storage tree
+    getValue = function(store, keys) {
+        var key = keys.shift(), endKey, arrResult, p,
+            keysClone;
+        if (key === '*') {
+            arrResult = [];
+
+            for (p in store) {
+                if (store.hasOwnProperty(p)) {
+                    keysClone = clone(keys);
+                    arrResult.push(getValue(store[p], keysClone));
+                }
+            }
+            return arrResult;
+        }
+        if (keys[0] && store[key] && (store[key][keys[0]] || keys[0] === '*')) {
+            return getValue(store[key], keys);
+        } else {
+            if (keys.length) {
+                endKey = keys[0];
+            } else {
+                endKey = key;
+            }
+            return store[endKey];
+        }
+    };
+
+    randomId = function() {
+        var text = "",
+            i=0,
+            possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        for(; i < 10; i++ ) {
+            text += possible.charAt(Math.floor(Math.random() * possible.length));
+        }
+        return text;
+    };
 
 }());

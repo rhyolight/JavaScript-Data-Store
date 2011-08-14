@@ -1062,9 +1062,9 @@ YUI.add('jsds_tests', function(Y) {
 			this.s.store('stuff.veggies.squash.number', 444);
 			
 			a.areEqual(2, called, 'callback not called');
-		}
+		},
         
-		/*
+
 		testUsingWildcard_AsFirstThing_InKey: function() {
             var called = 0,
 				val = {
@@ -1110,7 +1110,7 @@ YUI.add('jsds_tests', function(Y) {
 			
 			a.areEqual(1, called, 'callback should not have been called');
 		}
-		*/
+
 	}));
 	
 	
