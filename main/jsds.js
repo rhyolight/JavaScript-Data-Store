@@ -25,16 +25,20 @@
     var REGEX_DOT_G = /\./g,
         BSLASH_DOT = '\.',
         REGEX_STAR_G = /\*/g,
+        ID_LENGTH = 16,
         SYNONYMS = {
             set: 'store'
         },
         // static export
         JSDS,
+        // private props
+        randoms = [],
         // private functions
         storeIt,
         update,
         mergeArraysIntoSet,
         arrayContains,
+        arrayRemoveItem,
         fire,
         listenerApplies,
         removeListener,
@@ -44,7 +48,8 @@
         valueMatchesKeyString,
         clone,
         getValue,
-        randomId;
+        getRandomId,
+        generateRandomId;
 
     /*************************/
     /* The JSDataStore Class */
@@ -76,14 +81,26 @@
         store: function(key, val, opts /*optional*/) {
             var result, inputOverrides, resultOverride;
             opts = opts || { update: false };
-            inputOverrides = fire.call(this, 'store', {key: key, value: val, id: this.id, when: 'before', arguments: arguments});
+            inputOverrides = fire.call(this, 'store', {
+                key: key,
+                value: val,
+                id: this.id,
+                when: 'before',
+                arguments: arguments
+            });
             if (inputOverrides) {
                 key = inputOverrides[0] || key;
                 val = inputOverrides[1] || val;
                 opts = inputOverrides[2] || opts;
             }
             result = storeIt(this._s, key, opts, val);
-            resultOverride = fire.call(this, 'store', {key: key, value: val, id: this.id, when: 'after', result: result});
+            resultOverride = fire.call(this, 'store', {
+                key: key,
+                value: val,
+                id: this.id,
+                when: 'after',
+                result: this.get(key, {quiet: true})
+            });
             if (resultOverride) {
                 result = resultOverride;
             }
@@ -106,7 +123,26 @@
          * (fires 'get' event)
          */
         get: function(key) {
-            var s = this._s, keys, i=0, j=0, v, result;
+            var s = this._s, keys, i=0, j=0, opts, result,
+                inputOverrides, resultOverride;
+
+            opts = arguments[arguments.length-1];
+            if (typeof opts === 'string') {
+                opts = {};
+            } else {
+                arguments = Array.prototype.slice.call(arguments, 0, arguments.length-1);
+            }
+
+            if (! opts.quiet) {
+                inputOverrides = fire.call(this, 'get', {
+                    key: key,
+                    when: 'before',
+                    arguments: arguments
+                });
+                if (inputOverrides) {
+                    key = inputOverrides[0] || key;
+                }
+            }
 
             if (arguments.length === 1 && key.indexOf(BSLASH_DOT) < 0) {
                 result = s[key];
@@ -130,7 +166,17 @@
                 result = getValue(s, keys);
             }
 
-            fire.call(this, 'get', {key:key, value:result});
+            if (! opts.quiet) {
+                resultOverride = fire.call(this, 'get', {
+                    key:key,
+                    value: result,
+                    when: 'after',
+                    result: result
+                });
+                if (resultOverride) {
+                    result = resultOverride;
+                }
+            }
             return result;
         },
 
@@ -171,7 +217,7 @@
                 this._l[type] = [];
             }
             scope = scope || this;
-            cbid = randomId();
+            cbid = getRandomId();
             this._l[type].push({id: cbid, callback:fn, scope:scope, key: key, when: when});
             return {
                 id: cbid,
@@ -231,6 +277,7 @@
                 }
             }
             delete JSDS._stores[this.id];
+            arrayRemoveItem(randoms, this.id);
             fire.call(this, 'remove');
         }
     };
@@ -252,7 +299,7 @@
          */
         create: function(id) {
 
-            id = id || randomId();
+            id = id || getRandomId();
 
             if (this._stores[id]) {
                 throw new Error('Cannot overwrite existing data store "' + id + '"!');
@@ -417,6 +464,19 @@
         return false;
     };
 
+    arrayRemoveItem = function(arr, item) {
+        var i, needle;
+        for (i = 0; i< arr.length; i++) {
+            if (arr[i] === item) {
+                needle = i;
+                break;
+            }
+        }
+        if (needle) {
+            arr.splice(needle, 1);
+        }
+    };
+
     // fire an event of 'type' with included arguments to be passed to listeners functions
     // WARNING: this function must be invoked as fire.call(scope, type, args) because it uses 'this'.
     // The reason is so this function is not publicly exposed on JSDS instances
@@ -447,6 +507,8 @@
                     }
                     if (args.arguments) {
                         return opts.callback.apply(scope, args.arguments);
+                    } else if (args.result) {
+                        return opts.callback.call(scope, args.result);
                     } else {
                         return opts.callback.call(scope, type, args);
                     }
@@ -594,14 +656,23 @@
         }
     };
 
-    randomId = function() {
-        var text = "",
-            i=0,
+    generateRandomId = function(length) {
+        var text = "", i,
             possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
-        for(; i < 10; i++ ) {
+        for(i = 0; i < length; i++ ) {
             text += possible.charAt(Math.floor(Math.random() * possible.length));
         }
         return text;
+    };
+
+    getRandomId = function() {
+        var id = generateRandomId(ID_LENGTH);
+        // no duplicate ids allowed
+        while (arrayContains(randoms, id)) {
+            id = generateRandomId(ID_LENGTH);
+        }
+        randoms.push(id);
+        return id;
     };
 
     // for client side, attach to window

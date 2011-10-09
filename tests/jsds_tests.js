@@ -477,36 +477,11 @@ YUI.add('jsds_tests', function(Y) {
             a.areSame(1, called, 'callback was called after removal');
 		},
 
-		test_OnStore_CallbackIsPassedTypeOfEvent: function() {
-			var called = false;
-			this.s.on('store', function(type) {
-				called = true;
-				a.areEqual('store', type, 'Wrong event type');
-			});
-
-			this.s.store('mama', 'mia');
-
-			a.isTrue(called, 'callback for on store event never called');
-		},
-
-		test_OnStore_CallbackIsPassedStoreId: function() {
-			var called = false;
-			this.s.on('store', function(type, args) {
-				called = true;
-				a.isNotUndefined(args.id, 'store id given to callback was undefined');
-				a.areEqual('testStore', args.id, 'Wrong store id');
-			});
-
-			this.s.store('mama', 'mia');
-
-			a.isTrue(called, 'callback for on store event never called');
-		},
-
 		test_onStoreEvent_PassesStringStoreValue: function() {
 			var called = false;
-			this.s.on('store', function(type, args) {
+			this.s.on('store', function(value) {
 				called = true;
-				a.areEqual('mia', args.value, 'on store callback passed wrong value');
+				a.areEqual('mia', value, 'on store callback passed wrong value');
 			});
 
 			this.s.store('mama', 'mia');
@@ -516,9 +491,9 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_onStoreEvent_PassesStringStoreValue_WhenDeeper: function() {
 			var called = false;
-			this.s.on('store', function(type, args) {
+			this.s.on('store', function(value) {
 				called = true;
-				a.areEqual('abba', args.value, 'on store callback passed wrong value');
+				a.areEqual('abba', value, 'on store callback passed wrong value');
 			});
 
 			this.s.store('mama.mia', 'abba');
@@ -531,9 +506,9 @@ YUI.add('jsds_tests', function(Y) {
 
 			this.s.on('store', {
 			    key: 'one',
-			    callback: function(type, args) {
+			    callback: function(value) {
     				called = true;
-    				a.areEqual('Phoenix', args.value, 'on store callback passed wrong value');
+    				a.areEqual('Phoenix', value, 'on store callback passed wrong value');
     			}
 			});
 
@@ -562,26 +537,9 @@ YUI.add('jsds_tests', function(Y) {
 
 			this.s.on('store', {
 			    key: 'one.two',
-			    callback: function(type, args) {
+			    callback: function(value) {
     				called = true;
-    				a.areEqual('Phoenix', args.value, 'on store callback passed wrong value');
-    			}
-			});
-
-			this.s.store('one.two', 'Phoenix');
-
-			a.isTrue(called, 'callback for on store event never called');
-		},
-
-		test_onStoreEvent_forShallowKey_PassesObjectStoreValue: function() {
-			var called = false;
-
-			this.s.on('store', {
-			    key: 'one',
-			    callback: function(type, args) {
-    				called = true;
-    				a.isString(args.value.two);
-    				a.areEqual('Phoenix', args.value.two, 'on store callback passed wrong value');
+    				a.areEqual('Phoenix', value, 'on store callback passed wrong value');
     			}
 			});
 
@@ -594,9 +552,9 @@ YUI.add('jsds_tests', function(Y) {
 			var called = false;
 			this.s.on('store', {
 			    key: 'one.two.three',
-			    callback: function(type, args) {
+			    callback: function(value) {
     				called = true;
-    				a.areEqual('the value', args.value, 'on store callback passed wrong value');
+    				a.areEqual('the value', value.two.three, 'on store callback passed wrong value');
     			}
 			});
 
@@ -609,10 +567,8 @@ YUI.add('jsds_tests', function(Y) {
 			var called = false;
 			var fakeScope = {};
 			this.s.on('store', {
-				callback: function(type, args) {
+				callback: function() {
 					called = true;
-    				a.areEqual('mama', args.key, 'on store callback passed wrong key');
-					a.areEqual('mia', args.value, 'on store callback passed wrong value');
 					a.areSame(fakeScope, this, 'bad scope');
 				},
 				scope: fakeScope
@@ -625,14 +581,11 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_On_Function_WorksWith_DotConnectedKeys: function() {
 		    var called = false;
-		    this.s.on('store', {
-		        key: 'taco.town',
-		        callback: function(type, args) {
-		            called = true;
-		            a.areEqual('taco.town', args.key, 'on store callback passed wrong key');
-                    a.areEqual('yay', args.value, 'on store callback passed wrong value');
-		        }
-		    });
+		    this.s.before('store', 'taco.town', function(key, val) {
+                called = true;
+                a.areEqual('taco.town', key, 'on store callback passed wrong key');
+                a.areEqual('yay', val, 'on store callback passed wrong value');
+            });
 
 		    this.s.store('taco.city', 'oops');
 
@@ -741,11 +694,12 @@ YUI.add('jsds_tests', function(Y) {
 				callbackCalled = false;
 
 			JSDS.on('store', {
+                when: 'before',
 			    id: 'ajaxCache',
 		        key: 'cityData',
-		        callback: function(type, data) {
+		        callback: function(key, data) {
 		    	    callbackCalled = true;
-				    retrievedCityData = data.value;
+				    retrievedCityData = data;
 			    }
 			});
 
@@ -768,9 +722,9 @@ YUI.add('jsds_tests', function(Y) {
 			JSDS.on('get', {
 			    id:'ajaxCache',
 			    key:'cityData',
-			    callback:function(type, data) {
+			    callback:function(data) {
 				    callbackCalled = true;
-				    retrievedCityData = data.value;
+				    retrievedCityData = data;
 			    }
 			});
 
@@ -793,10 +747,11 @@ YUI.add('jsds_tests', function(Y) {
 				callbackCalled = 0;
 
 			JSDS.on('store', {
+                when: 'before',
 			    key:'cityData',
-			    callback: function(type, data) {
+			    callback: function(key, data) {
 				    callbackCalled++;
-				    retrievedCityData = data.value;
+				    retrievedCityData = data;
 			    }
 			});
 
@@ -820,12 +775,13 @@ YUI.add('jsds_tests', function(Y) {
 				callbackCalled = 0;
 
 			JSDS.on('store', {
-			    callback: function(type, data) {
+                when: 'before',
+			    callback: function(key, data) {
 				    callbackCalled++;
 				    if (callbackCalled === 1) {
-    				    retrievedCityData = data.value;
+    				    retrievedCityData = data;
 				    } else {
-				        retrievedOtherData = data.value;
+				        retrievedOtherData = data;
 				    }
 			    }
 			});
@@ -889,17 +845,13 @@ YUI.add('jsds_tests', function(Y) {
 
 			var dogCallbackCalled = false;
 
-			this.s.on('store', {
-				key: 'stuff.animals.mammals.dogs',
-				callback: function(type, args) {
-					dogCallbackCalled = true;
-					a.isArray(args.value);
-					aa.contains('Buttons', args.value);
-					aa.contains('Teela', args.value);
-					aa.contains('Sasha', args.value);
-					aa.contains('Ann-Marie', args.value);
-				}
-			});
+			this.s.before('set', 'stuff.animals.mammals.dogs', function(key, data) {
+                dogCallbackCalled = true;
+                a.areSame('stuff.animals', key, 'wrong key for store before cb');
+                a.isArray(data.mammals.dogs);
+                aa.contains('Buttons', data.mammals.dogs);
+                aa.contains('Teela', data.mammals.dogs);
+            });
 
 			this.s.store('stuff.animals', {
 				reptiles: {
@@ -941,88 +893,9 @@ YUI.add('jsds_tests', function(Y) {
 
 			a.areEqual(val.animals.reptiles, res, 'got wrong object back');
 
-		},
-
-		testSimpleWildcard_FirstPosition: function () {
-			var called = false;
-			this.s.on('store', {
-				key: '*.map.content',
-				callback: function(type, args) {
-					called = true;
-					a.areEqual('63336.map.content', args.value.key);
-					a.areEqual('yoyoyo', args.value.value);
-				}
-			});
-			this.s.store('63336', {
-				map: {
-					content: 'yoyoyo'
-				}
-			});
-			a.isTrue(called);
-		},
-
-		testSimpleWildcard_FirstPosition_negative: function () {
-			var called = false;
-			this.s.on('store', {
-				key: '*.map.content',
-				callback: function(type, args) {
-					called = true;
-				}
-			});
-			this.s.store('63336', {
-				map: {
-					not_content: 'yoyoyo'
-				}
-			});
-			a.isFalse(called);
-		},
-
-		testSimpleWildcard_MiddlePosition: function () {
-			var called = false;
-			this.s.on('store', {
-				key: '63336.*.content',
-				callback: function(type, args) {
-					called = true;
-				}
-			});
-			this.s.store('63336', {
-				map: {
-					content: 'yoyoyo'
-				}
-			});
-			a.isTrue(called);
-		},
-
-		testSimpleWildcard_WhenStoringInDeepKey: function () {
-			var called = false;
-			this.s.store('animals', {
-				frogs: {
-					number: 11,
-					area: 'north'
-				},
-				lizards: {
-					number: 24,
-					area: 'east'
-				},
-				veggies: {
-					cucumbers: {
-						area: 'west'
-					}
-				}
-			});
-
-			this.s.on('store', {
-				key: 'animals.*.number',
-				callback: function(type, args) {
-					called = true;
-				}
-			});
-			this.s.store('animals.lizards.number', 40);
-			a.isTrue(called);
 		}
-
 	});
-    // these tests are deferred cause they don't work yet
+    // these tests are deferred cause some don't work yet
     var wildcardTests = new Y.Test.Case({
 
 		name : "JSDS tricky wildcard tests",
@@ -1134,6 +1007,81 @@ YUI.add('jsds_tests', function(Y) {
 			this.s.store('stuff.veggies.squash.area', 'east');
 
 			a.areEqual(1, called, 'callback should not have been called');
+		},
+
+        testSimpleWildcard_FirstPosition: function () {
+			var called = false;
+			this.s.before('store', '*.map.content', function(key, value) {
+                called = true;
+                a.areEqual('63336', key);
+                a.areEqual('yoyoyo', value.map.content);
+			});
+			this.s.store('63336', {
+				map: {
+					content: 'yoyoyo'
+				}
+			});
+			a.isTrue(called);
+		},
+
+		testSimpleWildcard_FirstPosition_negative: function () {
+			var called = false;
+			this.s.on('store', {
+				key: '*.map.content',
+				callback: function(type, args) {
+					called = true;
+				}
+			});
+			this.s.store('63336', {
+				map: {
+					not_content: 'yoyoyo'
+				}
+			});
+			a.isFalse(called);
+		},
+
+		testSimpleWildcard_MiddlePosition: function () {
+			var called = false;
+			this.s.on('store', {
+				key: '63336.*.content',
+				callback: function(type, args) {
+					called = true;
+				}
+			});
+			this.s.store('63336', {
+				map: {
+					content: 'yoyoyo'
+				}
+			});
+			a.isTrue(called);
+		},
+
+		testSimpleWildcard_WhenStoringInDeepKey: function () {
+			var called = false;
+			this.s.store('animals', {
+				frogs: {
+					number: 11,
+					area: 'north'
+				},
+				lizards: {
+					number: 24,
+					area: 'east'
+				},
+				veggies: {
+					cucumbers: {
+						area: 'west'
+					}
+				}
+			});
+
+			this.s.on('store', {
+				key: 'animals.*.number',
+				callback: function(type, args) {
+					called = true;
+				}
+			});
+			this.s.store('animals.lizards.number', 40);
+			a.isTrue(called);
 		}
 
 	});
@@ -1176,7 +1124,9 @@ YUI.add('jsds_tests', function(Y) {
 			JSDS.clear();
 		},
 
-        'test before cb is called before store occurs': function() {
+        // SET
+
+        'test before set cb is called before store occurs': function() {
             var called = 0,
                 s = this.s;
             this.s.before('set', 'city', function() {
@@ -1217,7 +1167,7 @@ YUI.add('jsds_tests', function(Y) {
             a.isTrue(called, 'cb never called');
         },
 
-        'test after cb is called after store occurs': function() {
+        'test after set cb is called after store occurs': function() {
             var called = 0,
                 s = this.s;
             this.s.after('set', 'city', function() {
@@ -1230,7 +1180,7 @@ YUI.add('jsds_tests', function(Y) {
             a.areSame(1, called, 'after cb never called');
         },
 
-        'test after cb return value overrides result': function() {
+        'test after set cb return value overrides result': function() {
             var called = false;
             this.s.after('set', 'city', function(storeResult) {
                 called = true;
@@ -1244,7 +1194,7 @@ YUI.add('jsds_tests', function(Y) {
             a.areSame('override result', result, 'result was not overridden');
         },
 
-        'test before and after cbs are called': function() {
+        'test before and after set cbs are called': function() {
             var beforeCbCalled = 0,
                 afterCbCalled = 0,
                 s = this.s;
@@ -1259,12 +1209,51 @@ YUI.add('jsds_tests', function(Y) {
 
             a.areSame(1, beforeCbCalled, 'before cb never called');
             a.areSame(1, afterCbCalled, 'after cb never called');
+        },
+
+        // GET
+
+        'test before get cb is called before get occurs, and I can override the key': function() {
+            var called = 0, result;
+
+            this.s.set('city', 'Cupertino');
+            this.s.set('city2', 'Cupertino2');
+
+            this.s.before('get', 'city', function(key) {
+                called++;
+                a.areSame('city', key, 'wrong key to cb');
+                return [key + '2'];
+            });
+
+            result = this.s.get('city');
+
+            a.areSame(1, called, 'before cb never called');
+            a.areSame('Cupertino2', result, 'override key was not applied');
+        },
+
+        'test after get cb is called after get occurs, and I can override the result': function() {
+            var called = 0, result;
+
+            this.s.set('city', 'Cupertino');
+
+            this.s.after('get', 'city', function(value) {
+                called++;
+                a.areSame('Cupertino', value, 'bad get value in cb');
+                return value + '2';
+            });
+
+            result = this.s.get('city');
+
+            a.areSame(1, called, 'after cb never called');
+            a.areSame('Cupertino2', result, 'override value was not applied');
         }
+
     });
 
     suite.add(staticTests);
     suite.add(instanceTests);
     suite.add(eventTests);
+    // still working on this one
 //    suite.add(wildcardTests);
     suite.add(setGetTests);
     suite.add(beforeAfterTests);
