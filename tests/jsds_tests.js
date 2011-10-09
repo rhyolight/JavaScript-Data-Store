@@ -462,6 +462,21 @@ YUI.add('jsds_tests', function(Y) {
 			a.isTrue(called, 'callback for on store event never called');
 		},
 
+		'test calling on function returns a handle to remove it': function () {
+            var called = 0;
+			var handle = this.s.on('store', function() {
+				called++;
+			});
+
+			this.s.store('mama', 'mia');
+            a.areSame(1, called, 'callback for on store event never called');
+
+            handle.remove();
+
+            this.s.store('mama', 'mia');
+            a.areSame(1, called, 'callback was called after removal');
+		},
+
 		test_OnStore_CallbackIsPassedTypeOfEvent: function() {
 			var called = false;
 			this.s.on('store', function(type) {

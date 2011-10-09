@@ -28,6 +28,8 @@
         SYNONYMS = {
             set: 'store'
         },
+        // static export
+        JSDS,
         // private functions
         storeIt,
         update,
@@ -35,6 +37,7 @@
         arrayContains,
         fire,
         listenerApplies,
+        removeListener,
         getCompleteKey,
         pullOutKeys,
         toRegex,
@@ -153,7 +156,8 @@
          *                  'when': 'before' or 'after' (default is 'after')
          */
         on: function() {
-            var type = arguments[0], fn, scope, key, when = 'after';
+            var type = arguments[0],
+                me = this, cbid, fn, scope, key, when = 'after';
             if (typeof arguments[1] === 'object') {
                 fn = arguments[1].callback;
                 scope = arguments[1].scope;
@@ -167,13 +171,19 @@
                 this._l[type] = [];
             }
             scope = scope || this;
-            this._l[type].push({callback:fn, scope:scope, key: key, when: when});
-            return this; // allow chaining
+            cbid = randomId();
+            this._l[type].push({id: cbid, callback:fn, scope:scope, key: key, when: when});
+            return {
+                id: cbid,
+                remove: function() {
+                    removeListener(me._l[type], cbid);
+                }
+            };
         },
 
         before: function(type, key, cb) {
             type = SYNONYMS[type] || type;  // replace synonym times
-            this.on(type, {
+            return this.on(type, {
                 callback: cb,
                 key: key,
                 when: 'before'
@@ -182,7 +192,7 @@
 
         after: function(type, key, cb) {
             type = SYNONYMS[type] || type;  // replace synonym times
-            this.on(type, {
+            return this.on(type, {
                 callback: cb,
                 key: key,
                 when: 'after'
@@ -229,7 +239,7 @@
     /* Global JSDS namespace */
     /*************************/
 
-    window.JSDS = {
+    var JSDS = {
 
         _stores: {},
         _listeners: {},
@@ -457,31 +467,43 @@
         if (!listener.key || !crit) {
             return true;
         }
-        if (!listener.id || listener.id === this.id) {
-            if (!crit.key || crit.key.match(toRegex(listener.key))) {
-                return true;
+        if (!crit.key || crit.key.match(toRegex(listener.key))) {
+            return true;
+        }
+        last = crit.key.length;
+        while (!breakout) {
+            sub = crit.key.substr(0, last);
+            last = sub.lastIndexOf(BSLASH_DOT);
+            if (last < 0) {
+                k = sub;
+                breakout = true;
+            } else {
+                k = sub.substr(0, last);
             }
-            last = crit.key.length;
-            while (!breakout) {
-                sub = crit.key.substr(0, last);
-                last = sub.lastIndexOf(BSLASH_DOT);
-                if (last < 0) {
-                    k = sub;
-                    breakout = true;
-                } else {
-                    k = sub.substr(0, last);
-                }
-                //baseStore = getValue(this._s, crit.key.split('.'));
-                if (listener.key.indexOf('*') === 0) {
-                    return valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
-                } else if (listener.key.indexOf('*') > 0) {
-                    var replacedKey = getCompleteKey(crit);
-                    return toRegex(replacedKey).match(listener.key);
-                }
-                return valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
+            //baseStore = getValue(this._s, crit.key.split('.'));
+            if (listener.key.indexOf('*') === 0) {
+                return valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
+            } else if (listener.key.indexOf('*') > 0) {
+                var replacedKey = getCompleteKey(crit);
+                return toRegex(replacedKey).match(listener.key);
             }
+            return valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
         }
         return result;
+    };
+
+    removeListener = function(listeners, id) {
+        var i = 0, l, needle;
+        for (; i < listeners.length; i++) {
+            l = listeners[i];
+            if (l.id && l.id === id) {
+                needle = i;
+                break;
+            }
+        }
+        if (typeof needle !== 'undefined') {
+            listeners.splice(needle, 1);
+        }
     };
 
     getCompleteKey = function(o) {
@@ -581,5 +603,15 @@
         }
         return text;
     };
+
+    // for client side, attach to window
+    if (typeof window !== 'undefined') {
+        window.JSDS = JSDS;
+    }
+
+    // also export via CommonJS
+    if (typeof module != 'undefined' && module.exports) {
+        module.exports.JSDS = JSDS;
+    }
 
 }());
