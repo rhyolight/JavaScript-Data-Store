@@ -25,6 +25,9 @@
     var REGEX_DOT_G = /\./g,
         BSLASH_DOT = '\.',
         REGEX_STAR_G = /\*/g,
+        SYNONYMS = {
+            set: 'store'
+        },
         // private functions
         storeIt,
         update,
@@ -68,11 +71,27 @@
          * (fires 'store' event)
          */
         store: function(key, val, opts /*optional*/) {
-            var result;
+            var result, inputOverrides, resultOverride;
             opts = opts || { update: false };
+            inputOverrides = fire.call(this, 'store', {key: key, value: val, id: this.id, when: 'before', arguments: arguments});
+            if (inputOverrides) {
+                key = inputOverrides[0] || key;
+                val = inputOverrides[1] || val;
+                opts = inputOverrides[2] || opts;
+            }
             result = storeIt(this._s, key, opts, val);
-            fire.call(this, 'store', {key: key, value: val, id: this.id});
+            resultOverride = fire.call(this, 'store', {key: key, value: val, id: this.id, when: 'after', result: result});
+            if (resultOverride) {
+                result = resultOverride;
+            }
             return result;
+        },
+
+        /**
+         * Synonym for store()
+         */
+        set: function() {
+            return this.store.apply(this, arguments);
         },
 
         /**
@@ -131,15 +150,15 @@
          *                  'scope': the scope object for the callback execution
          *                  'key': the storage key to listen for. If specified only stores into this key will
          *                          cause callback to be executed
+         *                  'when': 'before' or 'after' (default is 'after')
          */
         on: function() {
-            var type = arguments[0], fn, scope, pname, key;
+            var type = arguments[0], fn, scope, key, when = 'after';
             if (typeof arguments[1] === 'object') {
                 fn = arguments[1].callback;
                 scope = arguments[1].scope;
-                if (arguments[1].key) {
-                    key = arguments[1].key;
-                }
+                key = arguments[1].key;
+                when = arguments[1].when || 'after';
             } else {
                 fn = arguments[1];
                 scope = arguments[2];
@@ -148,8 +167,26 @@
                 this._l[type] = [];
             }
             scope = scope || this;
-            this._l[type].push({callback:fn, scope:scope, key: key});
+            this._l[type].push({callback:fn, scope:scope, key: key, when: when});
             return this; // allow chaining
+        },
+
+        before: function(type, key, cb) {
+            type = SYNONYMS[type] || type;  // replace synonym times
+            this.on(type, {
+                callback: cb,
+                key: key,
+                when: 'before'
+            });
+        },
+
+        after: function(type, key, cb) {
+            type = SYNONYMS[type] || type;  // replace synonym times
+            this.on(type, {
+                callback: cb,
+                key: key,
+                when: 'after'
+            });
         },
 
         /**
@@ -282,6 +319,9 @@
          *                  'keys': list of keys that will cause callback to be executed (overrides 'key' option)
          */
         on: function(type, o) {
+            if (! o.when) {
+                o.when = 'after';
+            }
             if (!this._listeners[type]) {
                 this._listeners[type] = [];
             }
@@ -375,6 +415,8 @@
             localListeners = this._l[type] || [],
             staticListeners = JSDS._listeners[type] || [];
 
+        args = args || {};
+        
         // mix local listeners
         listeners = localListeners.concat(staticListeners);
 
@@ -393,7 +435,11 @@
                             args.value = getValue(this._s, opts.key.split('.'));
                         }
                     }
-                    opts.callback.call(scope, type, args);
+                    if (args.arguments) {
+                        return opts.callback.apply(scope, args.arguments);
+                    } else {
+                        return opts.callback.call(scope, type, args);
+                    }
                 }
             }
         }
@@ -402,7 +448,12 @@
     // WARNING: this function must be invoked as listenerApplies.call(scope, listener, crit) because it uses 'this'.
     // The reason is so this function is not publicly exposed on JSDS instances
     listenerApplies = function(listener, crit) {
-        var result = false, last, lastDot, sub, k, breakout = false;
+        var result = false, last, sub, k, breakout = false;
+        if (listener.when && crit.when) {
+            if (listener.when !== crit.when) {
+                return false;
+            }
+        }
         if (!listener.key || !crit) {
             return true;
         }
