@@ -21,7 +21,7 @@
  */
 
 (function() {
-
+    "use strict";
     var REGEX_DOT_G = /\./g,
         BSLASH_DOT = '\.',
         REGEX_STAR_G = /\*/g,
@@ -86,7 +86,7 @@
                 value: val,
                 id: this.id,
                 when: 'before',
-                arguments: arguments
+                args: Array.prototype.slice.call(arguments, 0, arguments.length)
             });
             if (inputOverrides) {
                 key = inputOverrides[0] || key;
@@ -123,40 +123,41 @@
          * (fires 'get' event)
          */
         get: function(key) {
-            var s = this._s, keys, i=0, j=0, opts, result,
+            var s = this._s, keys, i=0, j=0, opts, result, splitKeys,
+                args = Array.prototype.slice.call(arguments, 0, arguments.length),
                 inputOverrides, resultOverride;
 
-            opts = arguments[arguments.length-1];
+            opts = args[args.length-1];
             if (typeof opts === 'string') {
                 opts = {};
             } else {
-                arguments = Array.prototype.slice.call(arguments, 0, arguments.length-1);
+                args.pop();
             }
 
             if (! opts.quiet) {
                 inputOverrides = fire.call(this, 'get', {
                     key: key,
                     when: 'before',
-                    arguments: arguments
+                    args: args
                 });
                 if (inputOverrides) {
                     key = inputOverrides[0] || key;
                 }
             }
 
-            if (arguments.length === 1 && key.indexOf(BSLASH_DOT) < 0) {
+            if (args.length === 1 && key.indexOf(BSLASH_DOT) < 0) {
                 result = s[key];
             } else {
-                if (arguments.length > 1) {
+                if (args.length > 1) {
                     keys = [];
-                    for (i=0; i<arguments.length; i++) {
-                        if (arguments[i].indexOf(BSLASH_DOT) > -1) {
-                            var splitKeys = arguments[i].split(BSLASH_DOT);
+                    for (i=0; i<args.length; i++) {
+                        if (args[i].indexOf(BSLASH_DOT) > -1) {
+                            splitKeys = args[i].split(BSLASH_DOT);
                             for (j=0; j<splitKeys.length; j++) {
                                 keys.push(splitKeys[j]);
                             }
                         } else {
-                            keys.push(arguments[i]);
+                            keys.push(args[i]);
                         }
                     }
                 } else if (key.indexOf(BSLASH_DOT) > -1) {
@@ -185,14 +186,6 @@
          * the specified type is emitted and all the conditions defined in the parameters
          * are met.
          *
-         * There are 2 options for how parameters are passed into this function:
-         *
-         * OPTION 1
-         * type {String}: the type of event to listen for ('store', 'get', 'clear', etc.)
-         * fn {function}: function to be executed on event
-         * scope {object}: object to use as the scope of the callback
-         *
-         * OPTION 2
          * type {String}: the type of event to listen for ('store', 'get', 'clear', etc.)
          * options {object}: an object that contains one or more of the following configurations:
          *                  'callback': the function to be executed
@@ -201,23 +194,16 @@
          *                          cause callback to be executed
          *                  'when': 'before' or 'after' (default is 'after')
          */
-        on: function() {
-            var type = arguments[0],
-                me = this, cbid, fn, scope, key, when = 'after';
-            if (typeof arguments[1] === 'object') {
-                fn = arguments[1].callback;
-                scope = arguments[1].scope;
-                key = arguments[1].key;
-                when = arguments[1].when || 'after';
-            } else {
-                fn = arguments[1];
-                scope = arguments[2];
-            }
+        on: function(type, opts) {
+            var me = this,
+                cbid = getRandomId(),
+                key = opts.key,
+                fn = opts.callback,
+                scope = opts.scope || this,
+                when = opts.when || 'after';
             if (!this._l[type]) {
                 this._l[type] = [];
             }
-            scope = scope || this;
-            cbid = getRandomId();
             this._l[type].push({id: cbid, callback:fn, scope:scope, key: key, when: when});
             return {
                 id: cbid,
@@ -227,21 +213,37 @@
             };
         },
 
-        before: function(type, key, cb) {
+        before: function(type, key, cb, scpe) {
+            var callback = cb, scope = scpe;
             type = SYNONYMS[type] || type;  // replace synonym times
+            // key is optional
+            if (typeof key === 'function') {
+                callback = key;
+                scope = cb;
+                key = undefined;
+            }
             return this.on(type, {
-                callback: cb,
+                callback: callback,
                 key: key,
-                when: 'before'
+                when: 'before',
+                scope: scope
             });
         },
 
-        after: function(type, key, cb) {
+        after: function(type, key, cb, scpe) {
+            var callback = cb, scope = scpe;
             type = SYNONYMS[type] || type;  // replace synonym times
+            // key is optional
+            if (typeof key === 'function') {
+                callback = key;
+                scope = cb;
+                key = undefined;
+            }
             return this.on(type, {
-                callback: cb,
+                callback: callback,
                 key: key,
-                when: 'after'
+                when: 'after',
+                scope: scope
             });
         },
 
@@ -286,7 +288,7 @@
     /* Global JSDS namespace */
     /*************************/
 
-    var JSDS = {
+    JSDS = {
 
         _stores: {},
         _listeners: {},
@@ -480,12 +482,12 @@
     // fire an event of 'type' with included arguments to be passed to listeners functions
     // WARNING: this function must be invoked as fire.call(scope, type, args) because it uses 'this'.
     // The reason is so this function is not publicly exposed on JSDS instances
-    fire = function(type, args) {
+    fire = function(type, fireOptions) {
         var i, opts, scope, listeners, pulledKeys,
             localListeners = this._l[type] || [],
             staticListeners = JSDS._listeners[type] || [];
 
-        args = args || {};
+        fireOptions = fireOptions || {};
         
         // mix local listeners
         listeners = localListeners.concat(staticListeners);
@@ -493,24 +495,24 @@
         if (listeners.length) {
             for (i=0; i<listeners.length; i++) {
                 opts = listeners[i];
-                if (listenerApplies.call(this, opts, args)) {
+                if (listenerApplies.call(this, opts, fireOptions)) {
                     scope = opts.scope || this;
-                    if (opts.key && args) {
+                    if (opts.key && fireOptions) {
                         if (opts.key.indexOf('*') >= 0) {
-                            pulledKeys = pullOutKeys(args.value);
-                            args.value = {};
-                            args.value.key = args.key + pulledKeys;
-                            args.value.value = getValue(this._s, args.value.key.split('.'));
+                            pulledKeys = pullOutKeys(fireOptions.value);
+                            fireOptions.value = {};
+                            fireOptions.value.key = fireOptions.key + pulledKeys;
+                            fireOptions.value.value = getValue(this._s, fireOptions.value.key.split('.'));
                         } else {
-                            args.value = getValue(this._s, opts.key.split('.'));
+                            fireOptions.value = getValue(this._s, opts.key.split('.'));
                         }
                     }
-                    if (args.arguments) {
-                        return opts.callback.apply(scope, args.arguments);
-                    } else if (args.result) {
-                        return opts.callback.call(scope, args.result);
+                    if (fireOptions.args) {
+                        return opts.callback.apply(scope, fireOptions.args);
+                    } else if (fireOptions.result) {
+                        return opts.callback.call(scope, fireOptions.result);
                     } else {
-                        return opts.callback.call(scope, type, args);
+                        return opts.callback.call(scope, type, fireOptions);
                     }
                 }
             }
@@ -520,7 +522,7 @@
     // WARNING: this function must be invoked as listenerApplies.call(scope, listener, crit) because it uses 'this'.
     // The reason is so this function is not publicly exposed on JSDS instances
     listenerApplies = function(listener, crit) {
-        var result = false, last, sub, k, breakout = false;
+        var result = false, last, sub, k, replacedKey, breakout = false;
         if (listener.when && crit.when) {
             if (listener.when !== crit.when) {
                 return false;
@@ -546,7 +548,7 @@
             if (listener.key.indexOf('*') === 0) {
                 return valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
             } else if (listener.key.indexOf('*') > 0) {
-                var replacedKey = getCompleteKey(crit);
+                replacedKey = getCompleteKey(crit);
                 return toRegex(replacedKey).match(listener.key);
             }
             return valueMatchesKeyString(crit.value, listener.key.substr(crit.key.length+1));
@@ -679,10 +681,9 @@
     if (typeof window !== 'undefined') {
         window.JSDS = JSDS;
     }
-
-    // also export via CommonJS
-    if (typeof module != 'undefined' && module.exports) {
-        module.exports.JSDS = JSDS;
+    // or export via CommonJS
+    else {
+        exports.JSDS = JSDS;
     }
 
 }());

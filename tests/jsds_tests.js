@@ -453,7 +453,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_OnStore_CallbackIsCalled: function () {
 			var called = false;
-			this.s.on('store', function() {
+			this.s.before('set', function() {
 				called = true;
 			});
 
@@ -464,7 +464,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		'test calling on function returns a handle to remove it': function () {
             var called = 0;
-			var handle = this.s.on('store', function() {
+			var handle = this.s.after('set', function() {
 				called++;
 			});
 
@@ -479,7 +479,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_onStoreEvent_PassesStringStoreValue: function() {
 			var called = false;
-			this.s.on('store', function(value) {
+			this.s.after('set', function(value) {
 				called = true;
 				a.areEqual('mia', value, 'on store callback passed wrong value');
 			});
@@ -491,7 +491,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_onStoreEvent_PassesStringStoreValue_WhenDeeper: function() {
 			var called = false;
-			this.s.on('store', function(value) {
+			this.s.after('set', function(value) {
 				called = true;
 				a.areEqual('abba', value, 'on store callback passed wrong value');
 			});
@@ -598,7 +598,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_OnGet_CallbackIsCalled: function () {
 			var called = false;
-			this.s.on('get', function() {
+			this.s.after('get', function() {
 				called = true;
 			});
 
@@ -610,7 +610,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_OnClear_CallbackIsCalled: function () {
 			var called = false;
-			this.s.on('clear', function() {
+			this.s.after('clear', function() {
 				called = true;
 			});
 
@@ -621,7 +621,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_OnRemove_CallbackIsCalled: function () {
 			var called = false;
-			this.s.on('remove', function() {
+			this.s.after('remove', function() {
 				called = true;
 			});
 
@@ -632,16 +632,16 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_All_Event_CallbacksAreCalledCorrectTimes: function() {
 			var storeCb = 0, getCb = 0, clearCb = 0, removeCb = 0;
-			this.s.on('store', function() {
+			this.s.after('store', function() {
 				storeCb++;
 			});
-			this.s.on('get', function() {
+			this.s.after('get', function() {
 				getCb++;
 			});
-			this.s.on('clear', function() {
+			this.s.after('clear', function() {
 				clearCb++;
 			});
-			this.s.on('remove', function() {
+			this.s.after('remove', function() {
 				removeCb++;
 			});
 
@@ -660,11 +660,11 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_RemoveEventFired_ForEachStore_WhenEntireStoreIsCleared: function() {
 			var called = 0;
-			this.s.on('remove', function() {
+			this.s.after('remove', function() {
 				called++;
 			});
 			var otherStore = JSDS.create();
-			otherStore.on('remove', function() {
+			otherStore.after('remove', function() {
 				called++;
 			});
 			JSDS.clear();
@@ -673,7 +673,7 @@ YUI.add('jsds_tests', function(Y) {
 
 		test_EventCallbacks_CanBeExecuted_WithinCustomScope: function() {
 		    this.wrestler = 'Rowdy Rodney Piper';
-			this.s.on('store', function() {
+			this.s.after('store', function() {
 			    this.wrestler = 'Hulk Hogan';
 			}, this);
 
