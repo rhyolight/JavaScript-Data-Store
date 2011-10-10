@@ -31,7 +31,7 @@ JSDS is a small and fast data store.
 
 It allows you to listen for storage events on any branch or leaf within the storage structure.
 
-    var handler = store.after('set', 'cars.stats.ordered', function(result) {
+    var handle = store.after('set', 'cars.stats.ordered', function(result) {
         // cars.stats.ordered was just set... what are you going to do about it?
         // you can change the result that the calling code gets here
         return result * 2;
@@ -41,8 +41,8 @@ It allows you to listen for storage events on any branch or leaf within the stor
     store.get('cars.stats.ordered');
     // the answer is 60 because the listener above doubled it
 
-    // remove the handler
-    handler.remove();
+    // remove the listener
+    handle.remove();
 
     store.set('cars.stats.ordered', 30);
     store.get('cars.stats.ordered');
@@ -50,7 +50,7 @@ It allows you to listen for storage events on any branch or leaf within the stor
 
     // you can also intercept storage events before they occur
     // (oh yeah, and you can use wildcards)
-    handler = store.before('set', 'cars.stats.ordered.*', function(k, v) {
+    handle = store.before('set', 'cars.stats.ordered.*', function(k, v) {
         // will execute any time any property is set onto cars.ordered
         // and you can alter the storing key and value here by returning
         // a new arguments array
