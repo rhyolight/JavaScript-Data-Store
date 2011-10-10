@@ -910,7 +910,7 @@ YUI.add('jsds_tests', function(Y) {
 		},
 
 		testUsingWildcardInKey: function() {
-            var called = 0;
+            var beforeCbCount = 0, afterCbCount = 0;
 		    var val = {
 				animals: {
 					frogs: {
@@ -929,38 +929,34 @@ YUI.add('jsds_tests', function(Y) {
 				}
 			};
 
-			this.s.store('stuff', val);
+			this.s.set('stuff', val);
 
-			this.s.on('store', {
-			    key: 'stuff.*.*.area',
-			    callback: function(type, args) {
-			        called++;
-					a.isObject(args);
-					a.isString(args.value);
-					a.isArray(args.keys);
-					if (called === 1) {
-						a.areEqual(4, args.keys.length);
-						a.areEqual('stuff', args.keys[0]);
-						a.areEqual('stuff.animals', args.keys[1]);
-						a.areEqual('stuff.animals.frogs', args.keys[2]);
-						a.areEqual('stuff.animals.frogs.area', args.keys[3]);
-						a.areEqual('south', args.value);
-						a.areEqual('stuff.animals.frogs.area', args.keys[0]);
-					}
-			    }
-			});
+			this.s.before('set', 'stuff.*.*.area', function(key, val) {
+                beforeCbCount++;
+                if (beforeCbCount === 1) {
+                    a.areSame('stuff.animals.frogs.area', key);
+                    a.areEqual('south', val);
+                }
+            });
+
+            this.s.after('set', 'stuff.*.*.area', function(result) {
+                afterCbCount++;
+                if (afterCbCount === 1) {
+                    a.areSame('south', result);
+                }
+            });
 
 			this.s.store('stuff.animals.frogs.area', 'south');
-
-			a.areEqual(1, called, 'callback not called');
+			a.areEqual(1, beforeCbCount, 'before callback not called');
+			a.areEqual(1, afterCbCount, 'after callback not called');
 
 			this.s.store('stuff.veggies.squash.area', 'east');
-
-			a.areEqual(2, called, 'callback not called');
+			a.areEqual(2, beforeCbCount, 'before callback not called');
+			a.areEqual(2, afterCbCount, 'after callback not called');
 
 			this.s.store('stuff.veggies.squash.number', 444);
-
-			a.areEqual(2, called, 'callback not called');
+			a.areEqual(2, beforeCbCount, 'callback not called');
+			a.areEqual(2, afterCbCount, 'after callback not called');
 		},
 
 		testUsingWildcard_AsFirstThing_InKey: function() {
@@ -984,28 +980,19 @@ YUI.add('jsds_tests', function(Y) {
 				},
 				otherval = {animals:{frogs:{area:30}}};
 
-			this.s.store('stuff', val);
-			this.s.store('otherstuff', otherval);
+			this.s.set('stuff', val);
+			this.s.set('otherstuff', otherval);
 
-			this.s.on('store', {
-			    key: '*.animals.frogs.area',
-			    callback: function(type, args) {
-			        called++;
-					a.isObject(args);
-					a.areEqual('south', args.value, 'cb for mutli-matching wildcard sent wrong array values');
-					a.areEqual(30, val[1], 'cb for mutli-matching wildcard sent wrong array values');
-					a.isArray(keys);
-					a.areEqual(1, keys.length);
-					a.areEqual('stuff.animals.frogs.area', keys[0]);
-				}
-			});
+			this.s.before('set', '*.animals.frogs.area', function(k, v) {
+                called++;
+                a.areSame('stuff.animals.frogs.area', k);
+                a.areSame('south', v, 'cb for mutli-matching wildcard sent wrong array values');
+            });
 
 			this.s.store('stuff.animals.frogs.area', 'south');
-
 			a.areEqual(1, called, 'callback not called');
 
-			this.s.store('stuff.veggies.squash.area', 'east');
-
+            this.s.store('stuff.veggies.squash.area', 'east');
 			a.areEqual(1, called, 'callback should not have been called');
 		},
 
@@ -1253,8 +1240,7 @@ YUI.add('jsds_tests', function(Y) {
     suite.add(staticTests);
     suite.add(instanceTests);
     suite.add(eventTests);
-    // still working on this one
-//    suite.add(wildcardTests);
+    suite.add(wildcardTests);
     suite.add(setGetTests);
     suite.add(beforeAfterTests);
 
