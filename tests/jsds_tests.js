@@ -90,26 +90,26 @@ YUI.add('jsds_tests', function(Y) {
 		},
 
 		testStoreStringValue: function () {
-			this.s.store('city', 'Cupertino');
+			this.s.set('city', 'Cupertino');
 			var storedValue = this.s.get('city');
 
 			a.isNotUndefined(storedValue, 'stored value cannot be undefined');
 			a.areEqual('Cupertino', storedValue, 'got back wrong stored value');
 
-			this.s.store('city', 'San Jose');
+			this.s.set('city', 'San Jose');
 			storedValue = this.s.get('city');
 
 			a.areEqual('San Jose', storedValue, 'got back wrong stored value after reassignment');
 		},
 
 		testStoreNumberValue: function () {
-			this.s.store('price', 5.55);
+			this.s.set('price', 5.55);
 			var storedValue = this.s.get('price');
 
 			a.isNotUndefined(storedValue, 'stored value cannot be undefined');
 			a.areEqual(5.55, storedValue, 'got back wrong stored value');
 
-			this.s.store('price', 3.14);
+			this.s.set('price', 3.14);
 			storedValue = this.s.get('price');
 
 			a.areEqual(3.14, storedValue, 'got back wrong stored value after reassignment');
@@ -119,7 +119,7 @@ YUI.add('jsds_tests', function(Y) {
 			var chicken = {
 				name: 'Susie', eggs: 3, farm:'Hillsboro Farms'
 			};
-			this.s.store('chicken', chicken);
+			this.s.set('chicken', chicken);
 
 			var gotChicken = this.s.get('chicken');
 
@@ -133,14 +133,14 @@ YUI.add('jsds_tests', function(Y) {
 		    var chicken = {
 				name: 'Susie', eggs: 3, farm:'Hillsboro Farms'
 			};
-			this.s.store('chicken', chicken);
+			this.s.set('chicken', chicken);
 
 			var newchick = { eggs: 4};
 
 			a.areEqual('Susie', this.s.get('chicken.name'));
 			a.areEqual(3, this.s.get('chicken', 'eggs'));
 
-			this.s.store('chicken', newchick, {update: true});
+			this.s.set('chicken', newchick, {update: true});
 
 			a.areEqual(4, this.s.get('chicken', 'eggs'));
 			a.areEqual('Susie', this.s.get('chicken.name'));
@@ -164,7 +164,7 @@ YUI.add('jsds_tests', function(Y) {
 				}
 			};
 
-			this.s.store('stuff', val);
+			this.s.set('stuff', val);
 
 			var newVal = {
 				animals: {
@@ -182,7 +182,7 @@ YUI.add('jsds_tests', function(Y) {
 				}
 			};
 
-			this.s.store('stuff', newVal, { update: true });
+			this.s.set('stuff', newVal, { update: true });
 
 			var result = this.s.get('stuff.animals.reptiles.turtles');
 			a.isArray(result, 'result should have been an array');
@@ -219,7 +219,6 @@ YUI.add('jsds_tests', function(Y) {
 		    this.s.set('obj.arr', ['red'], {update: true});
 
 		    var res = this.s.get('obj.arr');
-console.log(res);
 		    a.isArray(res, 'result was not array');
 		    aa.contains('one', res);
 		    aa.contains('two', res);
@@ -228,9 +227,9 @@ console.log(res);
 		},
 
 		testUpdatingArrays_AddsNewValuesToEndOfArray: function() {
-		    this.s.store('arr', ['one','two','three']);
+		    this.s.set('arr', ['one','two','three']);
 
-		    this.s.store('arr', ['red'], {update: true});
+		    this.s.set('arr', ['red'], {update: true});
 
 		    var res = this.s.get('arr');
 
@@ -240,9 +239,9 @@ console.log(res);
 		},
 
 		testUpdatingArrays_DoesntDuplicateArrayValues: function() {
-		    this.s.store('arr', ['one','two','three']);
+		    this.s.set('arr', ['one','two','three']);
 
-		    this.s.store('arr', ['red', 'two'], {update: true});
+		    this.s.set('arr', ['red', 'two'], {update: true});
 
 		    var res = this.s.get('arr');
 
@@ -255,27 +254,27 @@ console.log(res);
 		},
 
         testStoreReturnsPreviousValue: function() {
-			this.s.store('city', 'Cupertino');
-			var prev = this.s.store('city', 'San Jose');
+			this.s.set('city', 'Cupertino');
+			var prev = this.s.set('city', 'San Jose');
 
 			a.areEqual('Cupertino', prev, 'Wrong stored value');
 		},
 
 		testStoreReturnsUndefinedWhenStoringFirstValue: function() {
-			var result = this.s.store('pig', 'Fluffy');
+			var result = this.s.set('pig', 'Fluffy');
 
-			a.isUndefined(result, 'store returned a value on initial store');
+			a.isUndefined(result, 'set returned a value on initial store');
 		},
 
 		testStoreReturnsOldValueWhenStoringAnotherValue: function() {
-			this.s.store('pig', 'Fluffy');
-			var result = this.s.store('pig', 'Orson');
+			this.s.set('pig', 'Fluffy');
+			var result = this.s.set('pig', 'Orson');
 
 			a.areEqual('Fluffy', result, 'store should have returned the old value');
 		},
 
 		testNamespaceStorage_CombinedDots: function() {
-			this.s.store('people', {males: ['Dean', 'Matt']});
+			this.s.set('people', {males: ['Dean', 'Matt']});
 			var result = this.s.get('people.males');
 
 			a.isArray(result, 'result should have been an array');
@@ -285,7 +284,7 @@ console.log(res);
 		},
 
 		testNamespaceStorage_SeparatedNoDots: function() {
-			this.s.store('people', {males: ['Dean', 'Matt']});
+			this.s.set('people', {males: ['Dean', 'Matt']});
 			var result = this.s.get('people', 'males');
 
 			a.isArray(result, 'result should have been an array');
@@ -311,7 +310,7 @@ console.log(res);
 				}
 			};
 
-			this.s.store('stuff', val);
+			this.s.set('stuff', val);
 
 			var result = this.s.get('stuff');
 
@@ -350,7 +349,7 @@ console.log(res);
 				}
 			};
 
-			this.s.store('stuff', val);
+			this.s.set('stuff', val);
 
 			var result = this.s.get('stuff');
 
@@ -386,7 +385,7 @@ console.log(res);
 				}
 			};
 
-			this.s.store('stuff', val);
+			this.s.set('stuff', val);
 
 			var result = this.s.get('stuff');
 
@@ -406,19 +405,19 @@ console.log(res);
 		},
 
 		testStoreIntoNonExistantNamespace: function() {
-			this.s.store('stuff.test', 'pygmies');
+			this.s.set('stuff.test', 'pygmies');
 			var result = this.s.get('stuff', 'test');
 			a.areEqual('pygmies', result);
 		},
 
 		testStoreReturnsPreviousValue_FromNestedNamespace: function() {
-			this.s.store('stuff.test', 'pygmies');
-			var old = this.s.store('stuff.test', 'kidneys');
+			this.s.set('stuff.test', 'pygmies');
+			var old = this.s.set('stuff.test', 'kidneys');
 			a.areEqual('pygmies', old);
 		},
 
 		testClear: function() {
-			this.s.store('stuff', 'frogs');
+			this.s.set('stuff', 'frogs');
 			a.areEqual('frogs', this.s.get('stuff'));
 			this.s.clear();
 			a.isUndefined(this.s.get('stuff'));
@@ -433,7 +432,7 @@ console.log(res);
 		testStoreHugeTextBlob: function() {
 			var blob = '<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"> <br/><html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"> <br/>  <head> <br/>	<meta http-equiv="X-UA-Compatible" content="IE=8"> <br/>	<script type="text/javascript"> <br/>//<![CDATA[<br/>var matches,url,path,domain;url=document.location.toString();try{domain=url.match(/https?:\/\/[^\/]+/);if(matches=url.match(/(.+?)#(.+)/)){url=matches[1];path=matches[2];if(path){var arr=path.split(/\?/);path=arr[0];var params=arr[1];path=path.replace(/^\//,"");var redirect_url=[domain,path].join("/");if(params){redirect_url=[redirect_url,params].join("?")}document.location=redirect_url}}}catch(err){};<br/>//]]><br/></script>	<script type="text/javascript"> <br/>//<![CDATA[<br/>var page={};var onCondition=function(D,C,A,B){D=D;A=A?Math.min(A,5):5;B=B||100;if(D()){C()}else{if(A>1){setTimeout(function(){onCondition(D,C,A-1,B)},B)}}};<br/>//]]><br/></script> <br/>	<meta content="text/html; charset=utf-8" http-equiv="Content-Type" /> <br/><meta content="en-us" http-equiv="Content-Language" /> <br/><meta content="Twitter is without a doubt the best way to share and discover what is happening right now." name="description" /> <br/><meta content="no" http-equiv="imagetoolbar" /> <br/><meta content="width = 780" name="viewport" /> <br/><meta content="4FTTxY4uvo0RZTMQqIyhh18HsepyJOctQ+XTOu1zsfE=" name="verify-v1" /> <br/><meta content="1" name="page" /> <br/><meta content="NOODP" name="robots" /> <br/><meta content="y" name="session-loggedin" /> <br/><meta content="6797182" name="session-userid" /> <br/><meta content="rhyolight" name="session-user-screen_name" /> <br/>	<title id="page_title">Twitter / Home</title> <br/>	<link href="http://a1.twimg.com/a/1279322210/images/favicon.ico" rel="shortcut icon" type="image/x-icon" /> <br/><link href="http://a1.twimg.com/a/1279322210/images/twitter_57.png" rel="apple-touch-icon" /> <br/><link rel="alternate" href="http://twitter.com/statuses/friends_timeline.rss" title="Your Twitter Timeline" type="application/rss+xml" /> <br/><link rel="alternate" href="http://twitter.com/statuses/replies.rss" title="Your Twitter @rhyolight Mentions" type="application/rss+xml" /> <br/><link rel="alternate" href="http://twitter.com/favorites/6797182.rss" title="Your Twitter Favorites" type="application/rss+xml" /> <br/> <br/>	<br/>	<link href="http://a3.twimg.com/a/1279322210/stylesheets/twitter.css?1279326324" media="screen" rel="stylesheet" type="text/css" /> <br/><link href="http://a3.twimg.com/a/1279322210/stylesheets/geo.css?1279326324" media="screen" rel="stylesheet" type="text/css" /> <br/><link href="http://a0.twimg.com/a/1279322210/stylesheets/buttons_new.css?1279326324" media="screen" rel="stylesheet" type="text/css" /> <br/>		<style type="text/css"> <br/>	  <br/>		body {<br/>  background: #022330 url(\'http://a1.twimg.com/profile_background_images/55715982/ornate_small1.png\') fixed repeat;<br/> <br/>}<br/> <br/>body#show #content .meta a.screen-name,<br/>#content .shared-content .screen-name,<br/>#content .meta .byline a {<br/>  color: #0084B4;<br/>}<br/> <br/>/* Link Color */<br/>a,<br/>#content tr.hentry:hover a,<br/>body#profile #content div.hentry:hover a,<br/>#side .stats a:hover span.stats_count,<br/>#side div.user_icon a:hover,<br/>li.verified-profile a:hover,<br/>#side .promotion .definition strong,<br/>p.list-numbers a:hover,<br/>#side div.user_icon a:hover span,<br/>#content .tabMenu li a,<br/>.translator-profile a:hover,<br/>#local_trend_locations li a,<br/>.modal-content .list-slug,<binput id="tab_action" name="tab" type="hidden" value="index" /> <br/>  <fieldset class="common-form standard-form"> <br/>	<div class="bar"> <br/>	  <h3><label for="status" class="doing">What&rsquo;s happening?</label></h3> <br/>	  <span id="chars_left_notice" class="numeric"> <br/>		<strong id="status-field-char-counter" class="char-counter"></strong> <br/>	  </span> <br/>	</div> <br/>	<div class="info"> <br/>	  <textarea cols="40" rows="2" id="status" name="status" accesskey="u" autocomplete="off" tabindex="1"></textarea> <br/>	  <div id="tweeting_controls"> <br/>		<a href="#" tabindex="2" id="tweeting_button" class="a-btn a-btn-m"><span>Tweet</span></a> <br/>	  </div> <br/>			<div class="status-btn" style="display:none"> <br/>		<input type="submit" name="update" value="update" id="update-submit" class="status-btn round-btn" tabindex="2" /> <br/>	  </div> <br/>	  <div id="update_notifications"> <br/>				  <div id="geo_status" class="position_container"></div> <br/>				<br/>		  <div id="latest_status"> <br/>			<span id="latest_status"><span id="latest_text"><span class="status-text"></span><span id="latest_meta" class="entry-meta">&nbsp;about 1 hour ago</span></span><span id="latest_text_full"><strong>Latest: </strong><span class="status-text">@<a class="tweet-url username" href="/michaelg" rel="nofollow">michaelg</a> Not to mention The Atomic Bitchwax, High on Fire, Baroness, Shrinebuilder, Orange Goblin, etc.</span> <br/>	  <span class="entry-meta"> <br/>		<a href="http://twitter.com/rhyolight/status/18943593462" class="entry-date" rel="bookmark"><span class="published" title="2010-07-19T21:09:54+00:00">about 1 hour ago</span></a>&nbsp;<span>from <a href="http://mowglii.com/itsy" rel="nofollow">Itsy!</a></span><a href="http://twitter.com/michaelg/status/18943009920">&nbsp;in reply to michaelg</a> <br/>	</span> <br/>  </span></span> <br/> <br/> <br/>		  </div> <br/>		<br/>	  </div> <br/>	  <div class="clear"></div> <br/>	</div> <br/>  </fieldset> <br/></form> <br/> <br/>		</div> <br/><div id="dm_update_box"><form action="/direct_messages" class="status-update-form" id="direct_message_form" method="post"><div style="margin:0;padding:0"><input name="authenticity_token" type="hidden" value="15874bb0ca09aa5b5ede1513c9188238cd718943" /></div>  <fieldset class="common-form standard-form"> <br/>	<div class="bar"> <br/>	  <h3> <br/>		<label for="doing"> <br/>		  Send <select name="user[id]" id="direct_message_user_id" accesskey=">" tabindex="3"></select> a direct message.<br/>		</label> <br/>	  </h3> <br/>	  <span id="chars_left_notice" class="numeric"> <br/>		<strong id="status-field-char-counter" class="char-counter"></strong> <br/>	  </span> <br/>	</div> <br/>	<div class="info"> <br/>	  <textarea accesskey="u" autocomplete="off" cols="15" id="text" name="text" rows="3" tabindex="4"></textarea> <br/>	</div> <br/>	<div class="status-btn"> <br/>	  <input type="submit" name="update" value="send" id="dm-submit" class="round-btn dm-btn" tabindex="4" /> <br/>	  <input id="direct_message_screen_name" name="screen_name" type="hidden" value="" /> <br/>	  <input id="tab_action" name="tab" type="hidden" value="index" /> <br/>	</div> <br/>  </fieldset> <br/></form> <br/></div> <br/> <br/><div id="user_search_results" class="section onebox_users"> <br/>  <h2>Name results for <strong></strong></h2> <br/>  <p class="seeall"><a href="#">View all name search results &raquo;</a></p> <br/>  <ul /> <br/></div> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/> <br/><div class="section"> <br/>  <br/> <br/>  <br/> <br/>  <div id="timeline_heading"> <br/>	<h1 id="heading"><span id="title">Home</span></h1> <br/>	<div id="geo_place_details"> <br/>  <br/></div> <br/> <br/> <br/>	<ul id="dm_tabs" class="tabMenu"> <br/>	  <li id="inbox_tab"><a href="http://twitter.com/inbox" class="in-page-link" data="{&quot;dispatch_action&quot;:&quot;inbox&quot;}"><span>Inbox</span></a></li> <br/>	  <li id="sent_tab"><a href="http://twitter.com/sent" class="in-page-link" data="{&quot;dispatch_action&quot;:&quot;sent&quot;}"><span>Sent</span></a></li> <br/>	</ul> <br/> <br/>	<br/> <br/>		  <ul id="retweet_tabs" class="tabMenu"> <br/>		<li id="retweets_by_others_tab"><a href="http://twitter.com/retweets_by_others" class="in-page-link" data="{&quot;dispatch_action&quot;:&quot;retweets_by_others&quot;}"><span>Retweets by others</span></a></li> <br/>		<li id="retweets_tab"><a href="http://twitter.com/retweets" class="in-page-link" data="{&quot;dispatch_action&quot;:&quot;retweets&quot;}"><span>Retweets by you</span></a></li> <br/>		<li id="retweeted_of_mine_tab"><a href="http://twitter.com/retweeted_of_mine" class="in-page-link" data="{&quot;dispatch_action&quot;:&quot;retweeted_of_mine&quot;}"><span>Your tweets, retweeted</span></a></li> <br/>	  </ul> <br/>	  </div> <br/> <br/>  <div class="trend-description-container"> <br/>	<div id="trend_descriptionlabel class="title">Description</label> <br/>	  <textarea id="list_description" name="list[description]" class="list-description title" maxlength="100"></textarea> <br/>	  <div class="list-description-instruction">Under 100 characters, optional</div> <br/>	</fieldset> <br/>	<fieldset class=\'clear bottom\'> <br/>	  <label class="title">Privacy</label> <br/>	  <div class="options"> <br/>		<label class="radio"><input type="radio" name="list[mode]" value="0" checked="checked" /> <strong>Public</strong> &mdash; Anyone can subscribe to this list.</label> <br/>		<label class="radio"><input type="radio" name="list[mode]" value="1" /> <strong>Private</strong> &mdash; Only you can access this list.</label> <br/>	  </div> <br/>	  <div class="private-warning"> <br/>		<strong>Are you sure?</strong> <br/>		<p>Switching your list from public to private will remove all of its subscribers.</p> <br/>	  </div> <br/>	</fieldset> <br/>	<input id="authenticity_token" name="authenticity_token" type="hidden" value="15874bb0ca09aa5b5ede1513c9188238cd718943" /> <br/>	<input type="submit" class="btn create-list-button submit" value="Create list" /> <br/>	<input type="submit" class="btn update-list-button submit" value="Update list" /> <br/>	<input type="hidden" class="list-member-id" name="list[member][id]" /> <br/>	<input type="hidden" class="list-slug-field" name="list[slug]" /> <br/>  </form> <br/>  </div> <br/></div> <br/> <br/><h2 id="list_dialog_header" style="display: none;"> <br/>  <span class="create-list-heading">Create a new list</span> <br/>  <span class="update-list-heading">Update this list</span> <br/></h2> <br/> <br/><div id="list_no_members_owner" style="display: none;"> <br/>  <div class="no-members"> <br/>  <h3>Find people to add to your list:</h3> <br/>  <form action="http://twitter.com/search/users" method="get">  <fieldset class="common-form"> <br/>				<input class="medium" id="q" name="q" type="text" />	  <input type="hidden" name="category" value="people" /> <br/>	  <input type="hidden" name="source" value="users" /> <br/>	  <input class="submit btn" id="search_users_submit" type="submit" value="search" />	  <p class="instruction">Search for a username, first or last name, business or brand</p> <br/>			</fieldset> <br/></form>  <p class="tip">You can also add people from your <a href="/following">Following</a> page or anyone’s profile page.</p> <br/></div> <br/></div> <br/><div id="list_no_members" style="display: none;"> <br/>  <p class="no-members">This list doesn’t follow any users yet. It probably will soon, though.</p> <br/> <br/></div> <br/> <br/>  <br/> <br/>				  </div> <br/>								</td> <br/>			  <br/>			</tr> <br/>		  </tbody> <br/>		</table> <br/>	  <br/> <br/>	  <br/>  <div id="footer" class="round"> <br/>	  <h3 class="offscreen">Footer</h3> <br/>	  <br/>	  <br/>	  <ul class="footer-nav"> <br/>		  <li class="first">&copy; 2010 Twitter</li> <br/>		  <li><a href="/about">About Us</a></li> <br/>		  <li><a href="/about/contact">Contact</a></li> <br/>		  <li><a href="http://blog.twitter.com">Blog</a></li> <br/>		  <li><a href="http://status.twitter.com">Status</a></li> <br/>					  <li><a href="/goodies">Goodies</a></li> <br/>					<li><a href="http://dev.twitter.com/">API</a></li> <br/>					  <li><a href="http://business.twitter.com/twitter101">Business</a></li> <br/>					<li><a href="http://support.twitter.com">Help</a></li> <br/>		  <li><a href="/jobs">Jobs</a></li> <br/>		  <li><a href="/tos">Terms</a></li> <br/>		  <li><a href="/privacy">Privacy</a></li> <br/>	  </ul> <br/>  </div> <br/> <br/> <br/> <br/>	  <hr /> <br/> <br/>	</div> <br/> <br/>	<br/> <br/>	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.0/jquery.min.js" type="text/javascript"></script> <br/><script src="http://a2.twimg.com/a/1279322210/javascripts/twitter.js?1279326324" type="text/javascript"></script> <br/><script src="http://a1.twimg.com/a/1279322210/javascripts/lib/jquery.tipsy.min.js?1279326324" type="text/javascript"></script> <br/><script type=\'text/javascript\' src=\'http://www.google.com/jsapi\'></script> <br/><script src="http://a0.twimg.com/a/1279322210/javascripts/lib/gears_init.js?1279326324" type="text/javascript"></script> <br/><script src="http://a1.twimg.com/a/1279322210/javascripts/lib/mustache.js?1279326324" type="text/javascript"></script> <br/><script src="http://a2.twimg.com/a/1279322210/javascripts/geov1.js?1279326324" type="text/javascript"></script> <br/><script src="http://a0.twimg.com/a/1279322210/javascripts/api.js?1279326324" type="text/javascript"></script> <br/>  <script src="http://a1.twimg.com/a/1279322210/javascripts/lib/mustache.js?1279326324" type="text/javascript"></script> <br/><script src="http://a2.twimg.com/a/1279322210/javascripts/dismissable.js?1279326324" type="text/javascript"></script> <br/>  <br/>	<script src="http://a0.twimg.com/a/1279322210/javascripts/api.js?1279326324" type="text/javascript"></script> <br/><script src="http://a3.twimg.com/a/1279322210/javascripts/controls.js?1279326324" type="text/javascript"></script> <br/><script src="http://a0.twimg.com/a/1279322210/javascripts/hover_cards.js?1279326324" type="text/javascript"></script> <br/>  <br/> <br/><script type="text/javascript"> <br/>//<![CDATA[<br/>  page.query = \'\';<br/>  page.prettyQuery = \'\';<br/>  <br/>  page.locale = \'en\';<br/>  <br/>	page.showSS = true;<br/>  <br/>	  page.controller_name = \'TimelineController\';<br/>	  page.action_name = \'home\';<br/>	  twttr.form_authenticity_token = \'15874bb0ca09aa5b5ede1513c9188238cd718943\';<br/>	  $.ajaxSetup({ data: { authenticity_token: \'15874bb0ca09aa5b5ede1513c9188238cd718943\' } });<br/> <br/>	  // FIXME: Reconcile with the kinds on the Status model.<br/>	  twttr.statusKinds = {<br/>		UPDATE: 1,<br/>		SHARE: 2<br/>	  };<br/>	  twttr.ListPerUserLimit = 20;<br/> <br/>	  <br/> <br/>	<br/>//]]><br/></script> <br/><script type="text/javascript"> <br/>//<![CDATA[<br/> <br/>	  $( function () {<br/>		$(\'#latest_status\').isCurrentStatus();<br/>	  (function() {<br/>	  <br/>		twttr.geo.IP = \'209.131.62.113\';<br/>	  <br/>		setTimeout(function() {<br/>		  $.extend(twttr.geo.options, {<br/>			more_places: true,<br/>			autocomplete: true,<br/>			autocomplete_zero_delay: false,<br/>			place_creation: true,<br/>			place_creation_needs_high_accuracy: false,<br/>			allow_set_location_manually: true,<br/>			show_place_details_in_map: true,<br/>			show_similar_places: true,<br/>			nearby_activity: false<br/>		  });<br/>		  new twttr.geo.UpdateUi({<br/>			geo_enabled: true,<br/>			has_dismissed_geo_promo: false,<br/>			current_user_path: "/users/6797182",<br/>			granularity: "poi",<br/>			avatarUrl: "http://a3.twimg.com/profile_images/655350303/rhyolight_big_mini.jpg"<br/>		  });<br/>		}, 0);<br/>	  })();<br/>	  $(\'#direct_message_form\').isDirectMessageForm();<br/>  <br/>	if (!($.browser.mshttp://www.");<br/>	document.write(unescape("%3Cscript src=\'" + gaJsHost + "google-analytics.com/ga.js\' type=\'text/javascript\'%3E%3C/script%3E"));<br/>  </script> <br/> <br/>  <script type="text/javascript"> <br/> <br/>	try {<br/>	  var pageTracker = _gat._getTracker("UA-30775-6");<br/>	  pageTracker._setDomainName("twitter.com");<br/>			pageTracker._setVar(\'Logged In\');<br/>			pageTracker._setVar(\'lang: en\');<br/>			pageTracker._initData();<br/>					<br/>		  pageTracker._trackPageview(\'/home\');<br/>				  } catch(err) { }<br/> <br/>  </script> <br/> <br/>  <!-- END google analytics --> <br/> <br/> <br/> <br/> <br/>	<div id="notifications"></div> <br/> <br/> <br/>	<br/> <br/>	<br/>  <br/> <br/> <br/>  </body> <br/> <br/></html>';
 
-			this.s.store('blob', blob);
+			this.s.set('blob', blob);
 
 			a.areSame(blob, this.s.get('blob'));
 		}
@@ -458,9 +457,9 @@ console.log(res);
 				called = true;
 			});
 
-			this.s.store('mama', 'mia');
+			this.s.set('mama', 'mia');
 
-			a.isTrue(called, 'callback for on store event never called');
+			a.isTrue(called, 'callback for on set event never called');
 		},
 
 		'test calling on function returns a handle to remove it': function () {
@@ -469,12 +468,12 @@ console.log(res);
 				called++;
 			});
 
-			this.s.store('mama', 'mia');
-            a.areSame(1, called, 'callback for on store event never called');
+			this.s.set('mama', 'mia');
+            a.areSame(1, called, 'callback for on set event never called');
 
             handle.remove();
 
-            this.s.store('mama', 'mia');
+            this.s.set('mama', 'mia');
             a.areSame(1, called, 'callback was called after removal');
 		},
 
@@ -482,92 +481,92 @@ console.log(res);
 			var called = false;
 			this.s.after('set', function(value) {
 				called = true;
-				a.areEqual('mia', value, 'on store callback passed wrong value');
+				a.areEqual('mia', value, 'on set callback passed wrong value');
 			});
 
-			this.s.store('mama', 'mia');
+			this.s.set('mama', 'mia');
 
-			a.isTrue(called, 'callback for on store event never called');
+			a.isTrue(called, 'callback for on set event never called');
 		},
 
 		test_onStoreEvent_PassesStringStoreValue_WhenDeeper: function() {
 			var called = false;
 			this.s.after('set', function(value) {
 				called = true;
-				a.areEqual('abba', value, 'on store callback passed wrong value');
+				a.areEqual('abba', value, 'on set callback passed wrong value');
 			});
 
-			this.s.store('mama.mia', 'abba');
+			this.s.set('mama.mia', 'abba');
 
-			a.isTrue(called, 'callback for on store event never called');
+			a.isTrue(called, 'callback for on set event never called');
 		},
 
 		test_onStoreEventWithKey_PassesObjectStoreValue: function() {
 			var called = false;
 
-			this.s.on('store', {
+			this.s.on('set', {
 			    key: 'one',
 			    callback: function(value) {
     				called = true;
-    				a.areEqual('Phoenix', value, 'on store callback passed wrong value');
+    				a.areEqual('Phoenix', value, 'on set callback passed wrong value');
     			}
 			});
 
-			this.s.store('one', 'Phoenix');
+			this.s.set('one', 'Phoenix');
 
-			a.isTrue(called, 'callback for on store event never called');
+			a.isTrue(called, 'callback for on set event never called');
 		},
 
 		test_onStoreEventWithDifferentKey_NeverCalled: function() {
 			var called = false;
 
-			this.s.on('store', {
+			this.s.on('set', {
 			    key: 'one',
 			    callback: function(type, args) {
     				called = true;
     			}
 			});
 
-			this.s.store('two', 'Phoenix');
+			this.s.set('two', 'Phoenix');
 
-			a.isFalse(called, 'callback for on store should not have been called');
+			a.isFalse(called, 'callback for on set should not have been called');
 		},
 
 		test_onStoreEvent_forSecondDeepKey_PassesObjectStoreValue: function() {
 			var called = false;
 
-			this.s.on('store', {
+			this.s.on('set', {
 			    key: 'one.two',
 			    callback: function(value) {
     				called = true;
-    				a.areEqual('Phoenix', value, 'on store callback passed wrong value');
+    				a.areEqual('Phoenix', value, 'on set callback passed wrong value');
     			}
 			});
 
-			this.s.store('one.two', 'Phoenix');
+			this.s.set('one.two', 'Phoenix');
 
-			a.isTrue(called, 'callback for on store event never called');
+			a.isTrue(called, 'callback for on set event never called');
 		},
 
 		test_onStoreEvent_PassesProperNestedValue_NotEntireStore: function() {
 			var called = false;
-			this.s.on('store', {
+			this.s.on('set', {
 			    key: 'one.two.three',
 			    callback: function(value) {
     				called = true;
-    				a.areEqual('the value', value.two.three, 'on store callback passed wrong value');
+    				a.areEqual('the value', value.two.three, 'on set callback passed wrong value');
     			}
 			});
 
-			this.s.store('one', {two:{three:'the value'}}, {update: true});
+			this.s.set('one', {two:{three:'the value'}}, {update: true});
 
-			a.isTrue(called, 'callback for on store event never called');
+			a.isTrue(called, 'callback for on set event never called');
 		},
 
 		test_On_Function_CanBePassed_Options: function() {
 			var called = false;
 			var fakeScope = {};
-			this.s.on('store', {
+			this.s.on('set', {
 				callback: function() {
 					called = true;
 					a.areSame(fakeScope, this, 'bad scope');
@@ -575,24 +574,24 @@ console.log(res);
 				scope: fakeScope
 			});
 
-			this.s.store('mama', 'mia');
+			this.s.set('mama', 'mia');
 
-			a.isTrue(called, 'callback for on store event never called');
+			a.isTrue(called, 'callback for on set event never called');
 		},
 
 		test_On_Function_WorksWith_DotConnectedKeys: function() {
 		    var called = false;
-		    this.s.before('store', 'taco.town', function(key, val) {
+		    this.s.before('set', 'taco.town', function(key, val) {
                 called = true;
-                a.areEqual('taco.town', key, 'on store callback passed wrong key');
-                a.areEqual('yay', val, 'on store callback passed wrong value');
+                a.areEqual('taco.town', key, 'on set callback passed wrong key');
+                a.areEqual('yay', val, 'on set callback passed wrong value');
             });
 
-		    this.s.store('taco.city', 'oops');
+		    this.s.set('taco.city', 'oops');
 
 		    a.isFalse(called, 'callback keyed on wrong string with dots was called');
 
-		    this.s.store('taco.town', 'yay');
+		    this.s.set('taco.town', 'yay');
 
 		    a.isTrue(called, 'callback keyed on string with dots was not called');
 		},
@@ -603,7 +602,7 @@ console.log(res);
 				called = true;
 			});
 
-			this.s.store('mama', 'mia');
+			this.s.set('mama', 'mia');
 			this.s.get('mama');
 
 			a.isTrue(called, 'callback for on get event never called');
@@ -633,7 +632,7 @@ console.log(res);
 
 		test_All_Event_CallbacksAreCalledCorrectTimes: function() {
 			var storeCb = 0, getCb = 0, clearCb = 0, removeCb = 0;
-			this.s.after('store', function() {
+			this.s.after('set', function() {
 				storeCb++;
 			});
 			this.s.after('get', function() {
@@ -646,14 +645,14 @@ console.log(res);
 				removeCb++;
 			});
 
-			this.s.store('city', 'Miami');  // storeCb      = 1
+			this.s.set('city', 'Miami');  // storeCb      = 1
 			this.s.get('city');			    // getCb		= 1
-			this.s.store('color', 'red');   // storeCb      = 2
+			this.s.set('color', 'red');   // storeCb      = 2
 			this.s.get('color');			// getCb		= 2
 			this.s.clear();				    // clearCb      = 1
 			this.s.remove();				// clearCb      = 2
 											// removeCb     = 1
-			a.areEqual(2, storeCb, 'store callback called wrong number of times');
+			a.areEqual(2, storeCb, 'set callback called wrong number of times');
 			a.areEqual(2, getCb, 'get callback called wrong number of times');
 			a.areEqual(2, clearCb, 'clear callback called wrong number of times');
 			a.areEqual(1, removeCb, 'remove callback called wrong number of times');
@@ -674,11 +673,11 @@ console.log(res);
 
 		test_EventCallbacks_CanBeExecuted_WithinCustomScope: function() {
 		    this.wrestler = 'Rowdy Rodney Piper';
-			this.s.after('store', function() {
+			this.s.after('set', function() {
 			    this.wrestler = 'Hulk Hogan';
 			}, this);
 
-			this.s.store('mama', 'mia');
+			this.s.set('mama', 'mia');
 
 			a.areEqual('Hulk Hogan', this.wrestler);
 			delete this.wrestler;
@@ -694,7 +693,7 @@ console.log(res);
 				retrievedCityData,
 				callbackCalled = false;
 
-			JSDS.on('store', {
+			ajaxCache.on('set', {
                 when: 'before',
 			    id: 'ajaxCache',
 		        key: 'cityData',
@@ -704,9 +703,9 @@ console.log(res);
 			    }
 			});
 
-			ajaxCache.store('cityData', cityData);
+			ajaxCache.set('cityData', cityData);
 
-			a.isTrue(callbackCalled, 'Static JSDS callback not called on store');
+			a.isTrue(callbackCalled, 'Static JSDS callback not called on set');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
 		},
 
@@ -720,7 +719,7 @@ console.log(res);
 				retrievedCityData,
 				callbackCalled = false;
 
-			JSDS.on('get', {
+			ajaxCache.on('get', {
 			    id:'ajaxCache',
 			    key:'cityData',
 			    callback:function(data) {
@@ -729,100 +728,11 @@ console.log(res);
 			    }
 			});
 
-			ajaxCache.store('cityData', cityData);
+			ajaxCache.set('cityData', cityData);
 			ajaxCache.get('cityData');
 
 			a.isTrue(callbackCalled, 'Static JSDS callback not called on get');
 			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
-		},
-
-		test_StaticJSDS_OnStore_ForAllStoreObjects: function() {
-		    var ajaxCache = JSDS.create('ajaxCache'),
-		        otherCache = JSDS.create('otherCache'),
-				cityData = {
-					"Miami": "Florida",
-					"St. Louis": "Missouri",
-					"Chicago": "Illinois"
-				},
-				retrievedCityData,
-				callbackCalled = 0;
-
-			JSDS.on('store', {
-                when: 'before',
-			    key:'cityData',
-			    callback: function(key, data) {
-				    callbackCalled++;
-				    retrievedCityData = data;
-			    }
-			});
-
-			ajaxCache.store('cityData', cityData);
-			otherCache.store('otherData', 'pencil');
-
-			a.areEqual(1, callbackCalled, 'Static JSDS callback not called correct number of times');
-			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
-		},
-
-		test_StaticJSDS_OnStore_ForAllStoreObjects_WithAnyKey: function() {
-		    var ajaxCache = JSDS.create('ajaxCache'),
-		        otherCache = JSDS.create('otherCache'),
-				cityData = {
-					"Miami": "Florida",
-					"St. Louis": "Missouri",
-					"Chicago": "Illinois"
-				},
-				retrievedCityData,
-				retrievedOtherData,
-				callbackCalled = 0;
-
-			JSDS.on('store', {
-                when: 'before',
-			    callback: function(key, data) {
-				    callbackCalled++;
-				    if (callbackCalled === 1) {
-    				    retrievedCityData = data;
-				    } else {
-				        retrievedOtherData = data;
-				    }
-			    }
-			});
-
-			ajaxCache.store('cityData', cityData);
-			otherCache.store('otherData', 'pencil');
-
-			a.areEqual(callbackCalled, 2, 'Static JSDS callback not called correct number of times');
-			a.areSame(cityData, retrievedCityData, 'Retrieved data object was not same');
-		},
-
-		test_StoresFireEvents_ToEventHandlers_CreatedBeforeStoreWasCreated: function() {
-		    var called = false;
-		    JSDS.on('store', {
-		        callback: function() {
-		            called = true;
-		        }
-		    });
-
-		    var s = JSDS.create();
-
-		    s.store('color', 'red');
-
-		    a.isTrue(called, 'Callback was never called for store created after event handler attached!');
-		},
-
-		test_RemovingStore_DeletesStaticListeners_MatchingStoreId: function() {
-		    var s = JSDS.create('removeTest');
-
-		    JSDS.on('store', {
-		        id: 'removeTest',
-		        callback: function() {}
-		    });
-
-		    var numListeners = JSDS._listeners.store.length;
-
-		    s.remove();
-		    delete s;
-
-		    a.areEqual((numListeners - 1), JSDS._listeners.store.length, 'Removing store did not remove static listeners!');
 		},
 
 		testProperCallbackCalledOnUpdate: function() {
@@ -842,19 +752,19 @@ console.log(res);
 				}
 			};
 
-			this.s.store('stuff', val);
+			this.s.set('stuff', val);
 
 			var dogCallbackCalled = false;
 
 			this.s.before('set', 'stuff.animals.mammals.dogs', function(key, data) {
                 dogCallbackCalled = true;
-                a.areSame('stuff.animals', key, 'wrong key for store before cb');
+                a.areSame('stuff.animals', key, 'wrong key for set before cb');
                 a.isArray(data.mammals.dogs);
                 aa.contains('Buttons', data.mammals.dogs);
                 aa.contains('Teela', data.mammals.dogs);
             });
 
-			this.s.store('stuff.animals', {
+			this.s.set('stuff.animals', {
 				reptiles: {
 					turtles: ['slowie']
 				}
@@ -862,7 +772,7 @@ console.log(res);
 
 			a.isFalse(dogCallbackCalled, 'callback was called when no dog data was updated');
 
-			this.s.store('stuff.animals', {
+			this.s.set('stuff.animals', {
 				mammals: {
 					dogs: ['Buttons', 'Teela']
 				}
@@ -888,7 +798,7 @@ console.log(res);
 				}
 			};
 
-			this.s.store('stuff', val, {update: true});
+			this.s.set('stuff', val, {update: true});
 
 			var res = this.s.get('stuff.animals.reptiles');
 
@@ -896,7 +806,6 @@ console.log(res);
 
 		}
 	});
-    // these tests are deferred cause some don't work yet
     var wildcardTests = new Y.Test.Case({
 
 		name : "JSDS tricky wildcard tests",
@@ -947,15 +856,15 @@ console.log(res);
                 }
             });
 
-			this.s.store('stuff.animals.frogs.area', 'south');
+			this.s.set('stuff.animals.frogs.area', 'south');
 			a.areEqual(1, beforeCbCount, 'before callback not called');
 			a.areEqual(1, afterCbCount, 'after callback not called');
 
-			this.s.store('stuff.veggies.squash.area', 'east');
+			this.s.set('stuff.veggies.squash.area', 'east');
 			a.areEqual(2, beforeCbCount, 'before callback not called');
 			a.areEqual(2, afterCbCount, 'after callback not called');
 
-			this.s.store('stuff.veggies.squash.number', 444);
+			this.s.set('stuff.veggies.squash.number', 444);
 			a.areEqual(2, beforeCbCount, 'callback not called');
 			a.areEqual(2, afterCbCount, 'after callback not called');
 		},
@@ -990,21 +899,21 @@ console.log(res);
                 a.areSame('south', v, 'cb for mutli-matching wildcard sent wrong array values');
             });
 
-			this.s.store('stuff.animals.frogs.area', 'south');
+			this.s.set('stuff.animals.frogs.area', 'south');
 			a.areEqual(1, called, 'callback not called');
 
-            this.s.store('stuff.veggies.squash.area', 'east');
+            this.s.set('stuff.veggies.squash.area', 'east');
 			a.areEqual(1, called, 'callback should not have been called');
 		},
 
         testSimpleWildcard_FirstPosition: function () {
 			var called = false;
-			this.s.before('store', '*.map.content', function(key, value) {
+			this.s.before('set', '*.map.content', function(key, value) {
                 called = true;
                 a.areEqual('63336', key);
                 a.areEqual('yoyoyo', value.map.content);
 			});
-			this.s.store('63336', {
+			this.s.set('63336', {
 				map: {
 					content: 'yoyoyo'
 				}
@@ -1014,13 +923,13 @@ console.log(res);
 
 		testSimpleWildcard_FirstPosition_negative: function () {
 			var called = false;
-			this.s.on('store', {
+			this.s.on('set', {
 				key: '*.map.content',
 				callback: function(type, args) {
 					called = true;
 				}
 			});
-			this.s.store('63336', {
+			this.s.set('63336', {
 				map: {
 					not_content: 'yoyoyo'
 				}
@@ -1030,13 +939,13 @@ console.log(res);
 
 		testSimpleWildcard_MiddlePosition: function () {
 			var called = false;
-			this.s.on('store', {
+			this.s.on('set', {
 				key: '63336.*.content',
 				callback: function(type, args) {
 					called = true;
 				}
 			});
-			this.s.store('63336', {
+			this.s.set('63336', {
 				map: {
 					content: 'yoyoyo'
 				}
@@ -1046,7 +955,7 @@ console.log(res);
 
 		testSimpleWildcard_WhenStoringInDeepKey: function () {
 			var called = false;
-			this.s.store('animals', {
+			this.s.set('animals', {
 				frogs: {
 					number: 11,
 					area: 'north'
@@ -1062,13 +971,13 @@ console.log(res);
 				}
 			});
 
-			this.s.on('store', {
+			this.s.on('set', {
 				key: 'animals.*.number',
 				callback: function(type, args) {
 					called = true;
 				}
 			});
-			this.s.store('animals.lizards.number', 40);
+			this.s.set('animals.lizards.number', 40);
 			a.isTrue(called);
 		}
 
@@ -1086,7 +995,7 @@ console.log(res);
 			JSDS.clear();
 		},
 
-        'test set stores just like store()': function() {
+        'test set stores just like set()': function() {
             this.s.set('city', 'Cupertino');
             var storedValue = this.s.get('city');
 
@@ -1114,7 +1023,7 @@ console.log(res);
 
         // SET
 
-        'test before set cb is called before store occurs': function() {
+        'test before set cb is called before set occurs': function() {
             var called = 0,
                 s = this.s;
             this.s.before('set', 'city', function() {
@@ -1155,7 +1064,7 @@ console.log(res);
             a.isTrue(called, 'cb never called');
         },
 
-        'test after set cb is called after store occurs': function() {
+        'test after set cb is called after set occurs': function() {
             var called = 0,
                 s = this.s;
             this.s.after('set', 'city', function() {

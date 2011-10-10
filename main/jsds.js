@@ -26,9 +26,6 @@
         BSLASH_DOT = '\.',
         REGEX_STAR_G = /\*/g,
         ID_LENGTH = 16,
-        SYNONYMS = {
-            set: 'store'
-        },
         // static export
         JSDS,
         // private props
@@ -78,10 +75,10 @@
          *
          * (fires 'store' event)
          */
-        store: function(key, val, opts /*optional*/) {
+        set: function(key, val, opts /*optional*/) {
             var result, inputOverrides, resultOverride;
             opts = opts || { update: false };
-            inputOverrides = fire.call(this, 'store', {
+            inputOverrides = fire.call(this, 'set', {
                 key: key,
                 value: val,
                 id: this.id,
@@ -94,7 +91,7 @@
                 opts = inputOverrides[2] || opts;
             }
             result = storeIt(this._s, key, opts, val);
-            resultOverride = fire.call(this, 'store', {
+            resultOverride = fire.call(this, 'set', {
                 key: key,
                 value: val,
                 id: this.id,
@@ -105,13 +102,6 @@
                 result = resultOverride;
             }
             return result;
-        },
-
-        /**
-         * Synonym for store()
-         */
-        set: function() {
-            return this.store.apply(this, arguments);
         },
 
         /**
@@ -215,7 +205,6 @@
 
         before: function(type, key, cb, scpe) {
             var callback = cb, scope = scpe;
-            type = SYNONYMS[type] || type;  // replace synonym times
             // key is optional
             if (typeof key === 'function') {
                 callback = key;
@@ -232,7 +221,6 @@
 
         after: function(type, key, cb, scpe) {
             var callback = cb, scope = scpe;
-            type = SYNONYMS[type] || type;  // replace synonym times
             // key is optional
             if (typeof key === 'function') {
                 callback = key;
@@ -267,17 +255,6 @@
         remove: function() {
             var ltype, optsArray, opts, i;
             this.clear();
-            for (ltype in JSDS._listeners) {
-                if (JSDS._listeners.hasOwnProperty(ltype)) {
-                    optsArray = JSDS._listeners[ltype];
-                    for (i=0; i<optsArray.length; i++) {
-                        opts = optsArray[i];
-                        if (!opts.id || opts.id === this.id) {
-                            optsArray.splice(i,1);
-                        }
-                    }
-                }
-            }
             delete JSDS._stores[this.id];
             arrayRemoveItem(randoms, this.id);
             fire.call(this, 'remove');
@@ -291,7 +268,6 @@
     JSDS = {
 
         _stores: {},
-        _listeners: {},
 
         /**
          * Create a new data store object. If no id is specified, a random id will be
@@ -361,30 +337,6 @@
                 }
             }
             return ids;
-        },
-
-        /**
-         * Used to add listeners to potentially any data store objects at once through
-         * a static interface. This listener will be executed whenever an event of the
-         * specified type is emitted that also matches the conditions in the options
-         * parameter.
-         *
-         * type {String}: the type of event to listen to
-         * options {object}: an object that contains one or more of the following configurations:
-         *                  'callback': the function to be executed
-         *                  'scope': the scope object for the callback execution
-         *                  'key': the storage key to listen for. If specified only stores into this key will
-         *                          cause callback to be executed
-         *                  'keys': list of keys that will cause callback to be executed (overrides 'key' option)
-         */
-        on: function(type, o) {
-            if (! o.when) {
-                o.when = 'after';
-            }
-            if (!this._listeners[type]) {
-                this._listeners[type] = [];
-            }
-            this._listeners[type].push(o);
         }
     };
 
@@ -484,14 +436,10 @@
     // The reason is so this function is not publicly exposed on JSDS instances
     fire = function(type, fireOptions) {
         var i, opts, scope, listeners, pulledKeys,
-            localListeners = this._l[type] || [],
-            staticListeners = JSDS._listeners[type] || [];
+            listeners = this._l[type] || [];
 
         fireOptions = fireOptions || {};
         
-        // mix local listeners
-        listeners = localListeners.concat(staticListeners);
-
         if (listeners.length) {
             for (i=0; i<listeners.length; i++) {
                 opts = listeners[i];
