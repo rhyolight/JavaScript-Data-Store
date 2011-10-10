@@ -214,16 +214,17 @@ YUI.add('jsds_tests', function(Y) {
 		},
 
 		testUpdatingArrays_DoesntClobberExistingValues: function() {
-		    this.s.store('arr', ['one','two','three']);
+		    this.s.set('obj', {arr:['one','two','three']});
 
-		    this.s.store('arr', ['red'], {update: true});
+		    this.s.set('obj.arr', ['red'], {update: true});
 
-		    var res = this.s.get('arr');
-
+		    var res = this.s.get('obj.arr');
+console.log(res);
 		    a.isArray(res, 'result was not array');
 		    aa.contains('one', res);
 		    aa.contains('two', res);
 		    aa.contains('three', res);
+		    aa.contains('red', res);
 		},
 
 		testUpdatingArrays_AddsNewValuesToEndOfArray: function() {
