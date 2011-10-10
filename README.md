@@ -8,7 +8,7 @@ JSDS is a small and fast data store.
 	store.set('cars', {
 	    toyota: ['prius', 'avalanche'],
 	    honda: ['accord', 'odyssey'],
-	    for: ['taurus', 'fairlane', 'F-150']
+	    ford: ['taurus', 'fairlane', 'F-150']
 	});
 
     store.get('cars.toyota')[1];
