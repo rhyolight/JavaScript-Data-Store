@@ -21,7 +21,6 @@
  */
 
 (function() {
-    "use strict";
     var REGEX_DOT_G = /\./g,
         BSLASH_DOT = '\.',
         REGEX_STAR_G = /\*/g,
@@ -492,7 +491,6 @@
             } else {
                 k = sub.substr(0, last);
             }
-            //baseStore = getValue(this._s, crit.key.split('.'));
             if (listener.key.indexOf('*') === 0) {
                 return valueMatchesKeyString(crit.value, listener.key.replace(/\*/, crit.key).substr(crit.key.length + 1));
             } else if (listener.key.indexOf('*') > 0) {
@@ -505,8 +503,8 @@
     };
 
     removeListener = function(listeners, id) {
-        var i = 0, l, needle;
-        for (; i < listeners.length; i++) {
+        var i, l, needle;
+        for (i=0; i < listeners.length; i++) {
             l = listeners[i];
             if (l.id && l.id === id) {
                 needle = i;
@@ -585,7 +583,6 @@
             keysClone;
         if (key === '*') {
             arrResult = [];
-
             for (p in store) {
                 if (store.hasOwnProperty(p)) {
                     keysClone = clone(keys);
