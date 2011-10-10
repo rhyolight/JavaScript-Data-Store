@@ -69,7 +69,7 @@ It allows you to listen for storage events on any branch or leaf within the stor
 API
 ---
 
-`JSDS` has a few static functions for creating and managing _stores_, which are the only object that gets create by the JSDS library. Here are some of the static functions:
+`JSDS` has a few static functions for creating and managing _stores_, which are the only objects that get created by the JSDS library. Here are some of the static functions:
 
 * `JSDS.create(id)`: Returns new instance of JSDS data store object with the given id. If id is omitted, a random id is assigned.
 * `JSDS.get(id)`: Returns an existing JSDS data store with the given id. If a store with the given id does not exist, returns `undefined`
