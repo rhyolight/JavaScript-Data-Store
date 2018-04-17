@@ -1,0 +1,37 @@
+{
+  "name": "javascript-data-store",
+  "version": "1.0.0",
+  "description": "JSDS is a small and fast data store.",
+  "main": "webpack.config.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "start": "webpack --config webpack.config.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rhyolight/JavaScript-Data-Store.git"
+  },
+  "keywords": [
+    "data",
+    "store",
+    "cache",
+    "listener",
+    "observable"
+  ],
+  "author": "Matt Taylor <matt@numenta.org>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rhyolight/JavaScript-Data-Store/issues"
+  },
+  "homepage": "https://github.com/rhyolight/JavaScript-Data-Store#readme",
+  "dependencies": {},
+  "devDependencies": {
+    "babel-core": "^6.26.0",
+    "babel-loader": "^7.1.4",
+    "babel-preset-env": "^1.6.1",
+    "webpack": "^4.6.0",
+    "webpack-cli": "^2.0.14"
+  }
+}
