@@ -2,7 +2,6 @@
   "name": "javascript-data-store",
   "version": "1.0.0",
   "description": "JSDS is a small and fast data store.",
-  "main": "webpack.config.js",
   "directories": {
     "test": "tests"
   },
@@ -26,7 +25,9 @@
     "url": "https://github.com/rhyolight/JavaScript-Data-Store/issues"
   },
   "homepage": "https://github.com/rhyolight/JavaScript-Data-Store#readme",
-  "dependencies": {},
+  "dependencies": {
+    "npm": "^5.8.0"
+  },
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",

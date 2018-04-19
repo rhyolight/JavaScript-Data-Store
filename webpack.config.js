@@ -11,7 +11,7 @@ let version = pkg.version
 module.exports = {
     mode: 'development',
     entry: [
-        "./src/jsds.js",
+        "./src/index.js"
     ],
     module: {
         rules: [

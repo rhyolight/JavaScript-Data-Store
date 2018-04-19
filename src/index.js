@@ -1,0 +1,1 @@
+window.JSDS = require('./jsds')

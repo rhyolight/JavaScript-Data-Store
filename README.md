@@ -33,8 +33,6 @@ It allows you to listen for storage events on any branch or leaf within the stor
 
     var handle = store.after('set', 'cars.stats.ordered', function(result) {
         // cars.stats.ordered was just set... what are you going to do about it?
-        // you can change the result that the calling code gets here
-        return result * 2;
     };
 
     store.set('cars.stats.ordered', 30);
@@ -48,13 +46,9 @@ It allows you to listen for storage events on any branch or leaf within the stor
     store.get('cars.stats.ordered');
     // the answer is 30 again. that's better.
 
-    // you can also intercept storage events before they occur
     // (oh yeah, and you can use wildcards)
-    handle = store.before('set', 'cars.stats.ordered.*', function(k, v) {
+    handle = store.after('set', 'cars.stats.ordered.*', function(k, v) {
         // will execute any time any property is set onto cars.ordered
-        // and you can alter the storing key and value here by returning
-        // a new arguments array
-        return [k + '-foo', v * 20];
     });
 
     store.set('cars.stats.blue', 345);
@@ -81,11 +75,16 @@ Each JSDS data store object created will have the following instance properties:
 * `id`: The id of the store
 * `set(key, value)`: Stores the given value for the given key
 * `get(key)`: Retrieves the value for given key, or undefined if it doesn't exist
-* `before(event, [optional] key, callback, scope)`: Will call the function registered with original arguments before any action has been taken. You can alter the arguments by returning an array of new arguments. Returns an `handler` object with a `remove()` function, which will remove the listener.
-* `after(event, [optional] key, callback, scope)`: Will call the function registered with the result of the action, after action has been taken. You can alter the result with a new return value. Returns an `handler` object with a `remove()` function, which will remove the listener.
+* `after(event, [optional] key, callback, scope)`: Will call the function registered with the result of the action, after action has been taken. Returns an `handler` object with a `remove()` function, which will remove the listener.
 * `clear()`: Removes all stored data from the store
 * `remove()`: Removes all stored data from the store and deletes store reference within JSDS (for full deletion, any outside references must also be deleted)
 
+Build
+-----
+
+    npm start
+
+This will build a webpack bundle in `docs/`
 
 AJAX Use Case
 -------------
