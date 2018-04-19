@@ -462,6 +462,22 @@ YUI.add('jsds_tests', function(Y) {
 			a.isTrue(called, 'callback for on set event never called');
 		},
 
+		'test multiple listener functions on same event are called': function () {
+			var called1 = false;
+			var called2 = false;
+			this.s.after('set', 'mama', function() {
+				called1 = true;
+			});
+			this.s.after('set', 'mama', function() {
+				called2 = true;
+			});
+
+			this.s.set('mama', 'mia');
+
+			a.isTrue(called1, 'callback for on set event never called');
+			a.isTrue(called2, '2nd callback for on set event never called');
+		},
+
 		'test calling on function returns a handle to remove it': function () {
             var called = 0;
 			var handle = this.s.after('set', function() {
@@ -1032,7 +1048,7 @@ YUI.add('jsds_tests', function(Y) {
             });
 
             this.s.set('city', 'Cupertino');
-            
+
             a.areSame(1, called, 'before cb never called');
         },
 
@@ -1050,19 +1066,19 @@ YUI.add('jsds_tests', function(Y) {
             a.isTrue(called, 'cb never called');
         },
 
-        'test before set cb return value overrides call params': function() {
-            var called = false;
-            this.s.before('set', 'city', function(k, v) {
-                called = true;
-                return ['city2', 'Cupertino2'];
-            });
-
-            this.s.set('city', 'Cupertino');
-
-            a.isUndefined(this.s.get('city'), 'cb return did not override key, original key was set');
-            a.areSame('Cupertino2', this.s.get('city2'), 'cb return did not override key, override key was not set');
-            a.isTrue(called, 'cb never called');
-        },
+        // 'test before set cb return value overrides call params': function() {
+        //     var called = false;
+        //     this.s.before('set', 'city', function(k, v) {
+        //         called = true;
+        //         return ['city2', 'Cupertino2'];
+        //     });
+		//
+        //     this.s.set('city', 'Cupertino');
+		//
+        //     a.isUndefined(this.s.get('city'), 'cb return did not override key, original key was set');
+        //     a.areSame('Cupertino2', this.s.get('city2'), 'cb return did not override key, override key was not set');
+        //     a.isTrue(called, 'cb never called');
+        // },
 
         'test after set cb is called after set occurs': function() {
             var called = 0,
@@ -1073,23 +1089,23 @@ YUI.add('jsds_tests', function(Y) {
             });
 
             this.s.set('city', 'Cupertino');
-            
+
             a.areSame(1, called, 'after cb never called');
         },
 
-        'test after set cb return value overrides result': function() {
-            var called = false;
-            this.s.after('set', 'city', function(storeResult) {
-                called = true;
-                a.isNotUndefined(storeResult);
-                return 'override result';
-            });
-
-            var result = this.s.set('city', 'Cupertino');
-
-            a.isTrue(called, 'after cb never called');
-            a.areSame('override result', result, 'result was not overridden');
-        },
+        // 'test after set cb return value overrides result': function() {
+        //     var called = false;
+        //     this.s.after('set', 'city', function(storeResult) {
+        //         called = true;
+        //         a.isNotUndefined(storeResult);
+        //         return 'override result';
+        //     });
+		//
+        //     var result = this.s.set('city', 'Cupertino');
+		//
+        //     a.isTrue(called, 'after cb never called');
+        //     a.areSame('override result', result, 'result was not overridden');
+        // },
 
         'test before and after set cbs are called': function() {
             var beforeCbCalled = 0,
@@ -1110,40 +1126,40 @@ YUI.add('jsds_tests', function(Y) {
 
         // GET
 
-        'test before get cb is called before get occurs, and I can override the key': function() {
-            var called = 0, result;
-
-            this.s.set('city', 'Cupertino');
-            this.s.set('city2', 'Cupertino2');
-
-            this.s.before('get', 'city', function(key) {
-                called++;
-                a.areSame('city', key, 'wrong key to cb');
-                return [key + '2'];
-            });
-
-            result = this.s.get('city');
-
-            a.areSame(1, called, 'before cb never called');
-            a.areSame('Cupertino2', result, 'override key was not applied');
-        },
-
-        'test after get cb is called after get occurs, and I can override the result': function() {
-            var called = 0, result;
-
-            this.s.set('city', 'Cupertino');
-
-            this.s.after('get', 'city', function(value) {
-                called++;
-                a.areSame('Cupertino', value, 'bad get value in cb');
-                return value + '2';
-            });
-
-            result = this.s.get('city');
-
-            a.areSame(1, called, 'after cb never called');
-            a.areSame('Cupertino2', result, 'override value was not applied');
-        }
+        // 'test before get cb is called before get occurs, and I can override the key': function() {
+        //     var called = 0, result;
+		//
+        //     this.s.set('city', 'Cupertino');
+        //     this.s.set('city2', 'Cupertino2');
+		//
+        //     this.s.before('get', 'city', function(key) {
+        //         called++;
+        //         a.areSame('city', key, 'wrong key to cb');
+        //         return [key + '2'];
+        //     });
+		//
+        //     result = this.s.get('city');
+		//
+        //     a.areSame(1, called, 'before cb never called');
+        //     a.areSame('Cupertino2', result, 'override key was not applied');
+        // },
+		//
+        // 'test after get cb is called after get occurs, and I can override the result': function() {
+        //     var called = 0, result;
+		//
+        //     this.s.set('city', 'Cupertino');
+		//
+        //     this.s.after('get', 'city', function(value) {
+        //         called++;
+        //         a.areSame('Cupertino', value, 'bad get value in cb');
+        //         return value + '2';
+        //     });
+		//
+        //     result = this.s.get('city');
+		//
+        //     a.areSame(1, called, 'after cb never called');
+        //     a.areSame('Cupertino2', result, 'override value was not applied');
+        // }
 
     });
 
@@ -1155,5 +1171,5 @@ YUI.add('jsds_tests', function(Y) {
     suite.add(beforeAfterTests);
 
 	Y.Test.Runner.add(suite);
- 
+
 });

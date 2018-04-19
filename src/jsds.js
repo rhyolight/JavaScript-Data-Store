@@ -1,16 +1,16 @@
 /*
  * Copyright (c) 2010 Matthew A. Taylor
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -75,31 +75,23 @@
          * (fires 'store' event)
          */
         set: function(key, val, opts /*optional*/) {
-            var result, inputOverrides, resultOverride;
+            var result;
             opts = opts || { update: false };
-            inputOverrides = fire.call(this, 'set', {
+            fire.call(this, 'set', {
                 key: key,
                 value: val,
                 id: this.id,
                 when: 'before',
                 args: Array.prototype.slice.call(arguments, 0, arguments.length)
             });
-            if (inputOverrides) {
-                key = inputOverrides[0] || key;
-                val = inputOverrides[1] || val;
-                opts = inputOverrides[2] || opts;
-            }
             result = storeIt(this._s, key, opts, val);
-            resultOverride = fire.call(this, 'set', {
+            fire.call(this, 'set', {
                 key: key,
                 value: val,
                 id: this.id,
                 when: 'after',
                 result: this.get(key, {quiet: true})
             });
-            if (resultOverride) {
-                result = resultOverride;
-            }
             return result;
         },
 
@@ -113,8 +105,7 @@
          */
         get: function(key) {
             var s = this._s, keys, i=0, j=0, opts, result, splitKeys,
-                args = Array.prototype.slice.call(arguments, 0, arguments.length),
-                inputOverrides, resultOverride;
+                args = Array.prototype.slice.call(arguments, 0, arguments.length);
 
             opts = args[args.length-1];
             if (typeof opts === 'string') {
@@ -124,14 +115,11 @@
             }
 
             if (! opts.quiet) {
-                inputOverrides = fire.call(this, 'get', {
+                fire.call(this, 'get', {
                     key: key,
                     when: 'before',
                     args: args
                 });
-                if (inputOverrides) {
-                    key = inputOverrides[0] || key;
-                }
             }
 
             if (args.length === 1 && key.indexOf(BSLASH_DOT) < 0) {
@@ -157,15 +145,12 @@
             }
 
             if (! opts.quiet) {
-                resultOverride = fire.call(this, 'get', {
+                fire.call(this, 'get', {
                     key:key,
                     value: result,
                     when: 'after',
                     result: result
                 });
-                if (resultOverride) {
-                    result = resultOverride;
-                }
             }
             return result;
         },
@@ -438,7 +423,7 @@
             listeners = this._l[type] || [];
 
         fireOptions = fireOptions || {};
-        
+
         if (listeners.length) {
             for (i=0; i<listeners.length; i++) {
                 opts = listeners[i];
@@ -455,11 +440,11 @@
                         }
                     }
                     if (fireOptions.args) {
-                        return opts.callback.apply(scope, fireOptions.args);
+                        opts.callback.apply(scope, fireOptions.args);
                     } else if (fireOptions.result) {
-                        return opts.callback.call(scope, fireOptions.result);
+                        opts.callback.call(scope, fireOptions.result);
                     } else {
-                        return opts.callback.call(scope, type, fireOptions);
+                        opts.callback.call(scope, type, fireOptions);
                     }
                 }
             }
@@ -469,6 +454,10 @@
     // WARNING: this function must be invoked as listenerApplies.call(scope, listener, crit) because it uses 'this'.
     // The reason is so this function is not publicly exposed on JSDS instances
     listenerApplies = function(listener, crit) {
+        console.log(
+                "Event %s:%s ... does %s:%s apply?",
+                crit.when, crit.key, listener.when, listener.key
+            )
         var result = false, last, sub, k, replacedKey, breakout = false;
         if (listener.when && crit.when) {
             if (listener.when !== crit.when) {
