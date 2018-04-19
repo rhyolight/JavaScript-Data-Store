@@ -1066,6 +1066,15 @@ YUI.add('jsds_tests', function(Y) {
             a.isTrue(called, 'cb never called');
         },
 
+		'test after set is given raw value when value is falsey': function() {
+			var value = undefined;
+			this.s.after('set', 'fountain', function(v) {
+				value = v
+			});
+			this.s.set('fountain', 0);
+			a.areSame(value, 0, 'zero value callback was given wrong set value')
+		},
+
         // 'test before set cb return value overrides call params': function() {
         //     var called = false;
         //     this.s.before('set', 'city', function(k, v) {

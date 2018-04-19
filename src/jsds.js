@@ -443,7 +443,7 @@ fire = function(type, fireOptions) {
                 } else if (fireOptions.result) {
                     opts.callback.call(scope, fireOptions.result);
                 } else {
-                    opts.callback.call(scope, type, fireOptions);
+                    opts.callback.call(scope, fireOptions.result);
                 }
             }
         }
