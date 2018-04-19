@@ -1,6 +1,6 @@
 {
   "name": "javascript-data-store",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JSDS is a small and fast data store.",
   "directories": {
     "test": "tests"

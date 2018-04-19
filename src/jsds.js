@@ -453,10 +453,6 @@ fire = function(type, fireOptions) {
 // WARNING: this function must be invoked as listenerApplies.call(scope, listener, crit) because it uses 'this'.
 // The reason is so this function is not publicly exposed on JSDS instances
 listenerApplies = function(listener, crit) {
-    console.log(
-            "Event %s:%s ... does %s:%s apply?",
-            crit.when, crit.key, listener.when, listener.key
-        )
     var result = false, last, sub, k, replacedKey, breakout = false;
     if (listener.when && crit.when) {
         if (listener.when !== crit.when) {
