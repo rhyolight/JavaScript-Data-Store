@@ -86,6 +86,13 @@ Build
 
 This will build a webpack bundle in `docs/`
 
+Test
+----
+
+    npm test
+    
+Hopefully they all pass.
+
 AJAX Use Case
 -------------
 
