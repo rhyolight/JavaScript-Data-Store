@@ -462,7 +462,7 @@ listenerApplies = function(listener, crit) {
     if (!listener.key || !crit) {
         return true;
     }
-    if (!crit.key || crit.key.match(toRegex(listener.key))) {
+    if (!crit.key || crit.key.match(toRegex('\\b' + listener.key + '\\b'))) {
         return true;
     }
     last = crit.key.length;
@@ -519,7 +519,9 @@ pullOutKeys = function(v) {
 };
 
 toRegex = function(s) {
-    return s.replace(REGEX_DOT_G, '\\.').replace(REGEX_STAR_G, '\.*');
+    return s
+        .replace(REGEX_DOT_G, '\\.')
+        .replace(REGEX_STAR_G, '\.*');
 };
 
 valueMatchesKeyString = function(val, key) {

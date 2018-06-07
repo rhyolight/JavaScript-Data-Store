@@ -83,7 +83,6 @@ describe('when storing and retrieving', () => {
         expect(storedValue).to.equal('San Jose')
     })
 
-
     it('Store Number Value', () => {
         setUp()
         store.set('price', 5.55);
@@ -407,6 +406,18 @@ describe('event tests', () => {
         store.set('mama', 'mia');
         expect(called1).to.be.true
         expect(called2).to.be.true
+    })
+
+    it('property name is a subset of a listener name', () => {
+        setUp()
+        let setEncodingCalled = false
+        store.after('set', 'n', () => {
+            setEncodingCalled = true
+        })
+        store.set('encoding', 'encoding-value')
+        expect(setEncodingCalled).to.be.false
+        store.set('n', 'n-value')
+        expect(setEncodingCalled).to.be.true
     })
 
     it('calling on function returns a handle to remove it', () => {
