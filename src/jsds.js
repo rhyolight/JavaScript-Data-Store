@@ -159,7 +159,7 @@ JSDataStore.prototype = {
      * the specified type is emitted and all the conditions defined in the parameters
      * are met.
      *
-     * type {String}: the type of event to listen for ('store', 'get', 'clear', etc.)
+     * type {String}: the type of event to listen for ('set', 'get', 'clear', etc.)
      * options {object}: an object that contains one or more of the following configurations:
      *                  'callback': the function to be executed
      *                  'scope': the scope object for the callback execution

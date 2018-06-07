@@ -1072,8 +1072,19 @@ YUI.add('jsds_tests', function(Y) {
 				value = v
 			});
 			this.s.set('fountain', 0);
-			a.areSame(value, 0, 'zero value callback was given wrong set value')
+			a.areSame(0, value, 'zero value callback was given wrong set value')
 		},
+
+        'test after set callback is given current and previous value': function() {
+            let value, prev
+			this.s.set('my-value', 'prev')
+            this.s.after('set', 'my-value', function(v, p) {
+                value = v
+				prev = p
+            });
+            this.s.set('my-value', 'current');
+            a.areSame('prev', prev, 'Wrong previous value in after set callback')
+        },
 
         // 'test before set cb return value overrides call params': function() {
         //     var called = false;

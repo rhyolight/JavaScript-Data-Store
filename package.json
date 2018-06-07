@@ -1,12 +1,13 @@
 {
   "name": "javascript-data-store",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "JSDS is a small and fast data store.",
   "directories": {
     "test": "tests"
   },
   "scripts": {
-    "start": "webpack --config webpack.config.js"
+    "test": "nyc --reporter=html --reporter=text mocha tests --recursive",
+    "start": "./node_modules/.bin/webpack"
   },
   "repository": {
     "type": "git",
@@ -25,14 +26,12 @@
     "url": "https://github.com/rhyolight/JavaScript-Data-Store/issues"
   },
   "homepage": "https://github.com/rhyolight/JavaScript-Data-Store#readme",
-  "dependencies": {
-    "npm": "^5.8.0"
-  },
   "devDependencies": {
-    "babel-core": "^6.26.0",
     "babel-loader": "^7.1.4",
-    "babel-preset-env": "^1.6.1",
+    "chai": "^4.1.2",
+    "mocha": "^5.2.0",
+    "nyc": "^12.0.2",
     "webpack": "^4.6.0",
-    "webpack-cli": "^2.0.14"
+    "webpack-cli": "^2.0.15"
   }
 }
